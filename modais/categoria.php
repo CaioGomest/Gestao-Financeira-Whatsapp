@@ -58,6 +58,14 @@
 
 <script>
 window.abrirModalCategoria = function(categoria = null) {
+    // Fechar menu circular se estiver aberto
+    var menuCircular = document.getElementById('menu-circular');
+    var menuOverlay = document.getElementById('menu-overlay');
+    var botaoAdicionar = document.querySelector('.botao-adicionar-central');
+    if (menuCircular) menuCircular.classList.remove('ativo');
+    if (menuOverlay) menuOverlay.classList.remove('ativo');
+    if (botaoAdicionar) botaoAdicionar.classList.remove('ativo');
+
     // Resetar formulário
     document.getElementById('form-categoria').reset();
     document.getElementById('categoria-id').value = '';
@@ -81,6 +89,12 @@ window.abrirModalCategoria = function(categoria = null) {
 
 function fecharModalCategoria() {
     document.getElementById('modalCategoria').classList.remove('ativo');
+    var menuCircular = document.getElementById('menu-circular');
+    var menuOverlay = document.getElementById('menu-overlay');
+    var botaoAdicionar = document.querySelector('.botao-adicionar-central');
+    if (menuCircular) menuCircular.classList.remove('ativo');
+    if (menuOverlay) menuOverlay.classList.remove('ativo');
+    if (botaoAdicionar) botaoAdicionar.classList.remove('ativo');
 }
 
 function atualizarIconePreview() {

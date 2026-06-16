@@ -40,6 +40,22 @@ function autenticarUsuario($email, $senha) {
 }
 }
 
+if (!function_exists('cadastrarUsuario')) {
+function cadastrarUsuario($nome, $email, $senha) {
+    global $database;
+    $existe = $database->select("SELECT id FROM usuarios WHERE email = ?", [$email]);
+    if (!empty($existe)) {
+        return ['erro' => 'email_existe'];
+    }
+    $hash = password_hash($senha, PASSWORD_DEFAULT);
+    $id = $database->insert(
+        "INSERT INTO usuarios (nome, email, senha_hash, status, perfil, data_cadastro) VALUES (?, ?, ?, 'ativo', 'usuario', NOW())",
+        [$nome, $email, $hash]
+    );
+    return $id ? ['sucesso' => true, 'id' => $id] : ['erro' => 'falha'];
+}
+}
+
 /**
  * Faz login do usuário
  * @param string $email Email do usuário
@@ -110,9 +126,14 @@ function obterDadosUsuario() {
     }
     
     global $database;
-    $sql = "SELECT id, nome, email, foto_perfil, plano_id, data_cadastro, ultimo_acesso FROM usuarios WHERE id = ?";
-    $usuarios = $database->select($sql, [$_SESSION['usuario_id']]);
-    
+    try {
+        $sql = "SELECT id, nome, email, foto_perfil, plano_id, data_cadastro, ultimo_acesso, telefone, cpf, whatsapp_numero FROM usuarios WHERE id = ?";
+        $usuarios = $database->select($sql, [$_SESSION['usuario_id']]);
+    } catch (Exception $e) {
+        $sql = "SELECT id, nome, email, foto_perfil, data_cadastro, ultimo_acesso FROM usuarios WHERE id = ?";
+        $usuarios = $database->select($sql, [$_SESSION['usuario_id']]);
+    }
+
     return !empty($usuarios) ? $usuarios[0] : null;
 }
 }
@@ -143,6 +164,11 @@ function atualizarUsuario($dados) {
         if (empty($colAtualizadoEm)) {
             $database->query("ALTER TABLE usuarios ADD COLUMN atualizado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER cpf");
         }
+        $colWhatsapp = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'whatsapp_numero'");
+        if (empty($colWhatsapp)) {
+            $database->query("ALTER TABLE usuarios ADD COLUMN whatsapp_numero VARCHAR(20) NULL");
+            $database->query("CREATE INDEX IF NOT EXISTS idx_usuarios_whatsapp ON usuarios(whatsapp_numero)");
+        }
     } catch (Exception $e) {
         // Continua mesmo que não consiga criar colunas
     }
@@ -167,7 +193,12 @@ function atualizarUsuario($dados) {
         $campos[] = "cpf = ?";
         $params[] = $dados['cpf'];
     }
-    
+    if (isset($dados['whatsapp_numero'])) {
+        // Normaliza: remove tudo que não é dígito
+        $wnum = preg_replace('/\D/', '', $dados['whatsapp_numero']);
+        $campos[] = "whatsapp_numero = ?";
+        $params[] = $wnum ?: null;
+    }
     if (isset($dados['foto_perfil'])) {
         $campos[] = "foto_perfil = ?";
         $params[] = $dados['foto_perfil'];
@@ -176,8 +207,7 @@ function atualizarUsuario($dados) {
     if (empty($campos)) {
         return false;
     }
-    
-    $campos[] = "atualizado_em = NOW()";
+
     $params[] = $_SESSION['usuario_id'];
     
     $sql = "UPDATE usuarios SET " . implode(', ', $campos) . " WHERE id = ?";
@@ -248,6 +278,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['api']) && $_GET['api'] =
         case 'verificar_login':
             echo json_encode(['logado' => usuarioLogado()]);
             break;
+
+        case 'buscar_por_whatsapp':
+            $numero = preg_replace('/\D/', '', $_GET['numero'] ?? '');
+            if (!$numero) {
+                http_response_code(400);
+                echo json_encode(['erro' => 'Numero obrigatorio']);
+                break;
+            }
+            global $database;
+            $sql = "SELECT u.id, u.nome, u.email, u.whatsapp_numero,
+                           CASE WHEN a.id IS NOT NULL THEN 'ativo' ELSE 'inativo' END AS plano_status,
+                           p.nome AS plano_nome,
+                           (SELECT c.id FROM contas c WHERE c.usuario_id = u.id AND c.ativa = 1 ORDER BY c.id LIMIT 1) AS conta_id_padrao
+                    FROM usuarios u
+                    LEFT JOIN assinaturas a ON a.usuario_id = u.id AND a.status IN ('ativo','trialing','ativa')
+                    LEFT JOIN planos p ON p.id = a.plano_id
+                    WHERE u.whatsapp_numero = ? AND u.status = 'ativo'
+                    LIMIT 1";
+            $rows = $database->select($sql, [$numero]);
+            if (empty($rows)) {
+                echo json_encode(null);
+                break;
+            }
+            $u = $rows[0];
+            // Normaliza plano_status e adiciona flag booleana para o n8n
+            $s = strtolower(trim($u['plano_status'] ?? ''));
+            $u['plano_status'] = ($s === 'ativo' || $s === 'ativa' || $s === 'trialing') ? 'ativo' : $s;
+            $u['plano_ativo']  = ($u['plano_status'] === 'ativo');
+            // Cria/retoma sessão dedicada para este usuário (usada pelo n8n nas chamadas subsequentes)
+            $sessaoId = md5('whatsapp_bot_' . $u['id'] . '_' . date('Y-m-d'));
+            session_write_close();
+            session_id($sessaoId);
+            session_start();
+            $_SESSION['usuario_id']    = $u['id'];
+            $_SESSION['usuario_nome']  = $u['nome'];
+            $_SESSION['usuario_email'] = $u['email'];
+            $_SESSION['logado']        = true;
+            session_write_close();
+            $u['sessao_php'] = $sessaoId;
+            echo json_encode($u);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['erro' => 'Ação não reconhecida']);
@@ -281,11 +353,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['api']) && $_GET['api'] 
                     echo json_encode(['erro' => 'JSON inválido', 'detalhe' => json_last_error_msg()]);
                     break;
                 }
-                $ok = atualizarUsuario($dados ?? []);
+                $dados = $dados ?? [];
+
+                // Verificação de e-mail: se mudou, exige código
+                if (isset($dados['email'])) {
+                    $emailAtual = $_SESSION['usuario_email'] ?? '';
+                    $novoEmail  = trim($dados['email']);
+                    if ($novoEmail !== $emailAtual) {
+                        $sessEmail = $_SESSION['reset_email'] ?? null;
+                        $codigoInformado = $dados['codigo_email'] ?? '';
+                        if (!$sessEmail || time() > ($sessEmail['expira'] ?? 0)
+                            || $sessEmail['codigo'] !== $codigoInformado
+                            || $sessEmail['email'] !== $novoEmail) {
+                            http_response_code(400);
+                            echo json_encode(['erro' => 'codigo_invalido']);
+                            break;
+                        }
+                        unset($_SESSION['reset_email']);
+                        // Atualiza email na sessão
+                        $_SESSION['usuario_email'] = $novoEmail;
+                    }
+                }
+
+                $ok = atualizarUsuario($dados);
                 echo json_encode(['sucesso' => (bool)$ok]);
             } catch (Throwable $e) {
                 http_response_code(500);
                 echo json_encode(['erro' => 'Falha ao atualizar', 'detalhe' => $e->getMessage()]);
+            }
+            break;
+
+        case 'enviar_codigo_email':
+            try {
+                $dados = json_decode(file_get_contents('php://input'), true);
+                $novoEmail = trim($dados['novo_email'] ?? '');
+                if (!$novoEmail || !filter_var($novoEmail, FILTER_VALIDATE_EMAIL)) {
+                    http_response_code(400);
+                    echo json_encode(['erro' => 'Email inválido']);
+                    break;
+                }
+                // Verifica se já está em uso
+                $existe = $database->select("SELECT id FROM usuarios WHERE email = ? AND id != ?", [$novoEmail, $_SESSION['usuario_id']]);
+                if (!empty($existe)) {
+                    http_response_code(409);
+                    echo json_encode(['erro' => 'Email já cadastrado']);
+                    break;
+                }
+                $codigo = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $_SESSION['reset_email'] = ['email' => $novoEmail, 'codigo' => $codigo, 'expira' => time() + 900];
+                $ok = enviar_email_codigo($novoEmail, $codigo);
+                echo json_encode(['sucesso' => (bool)$ok]);
+            } catch (Throwable $e) {
+                http_response_code(500);
+                echo json_encode(['erro' => 'Falha ao enviar código', 'detalhe' => $e->getMessage()]);
             }
             break;
         case 'enviar_codigo_senha':

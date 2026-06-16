@@ -41,18 +41,18 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
         }
 
         .glass-panel {
-            background: rgba(24, 24, 27, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(24, 24, 27, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .glass-menu {
-            background: rgba(9, 9, 11, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(9, 9, 11, 0.92);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.5);
         }
 
         .gold-gradient-text {
@@ -85,11 +85,11 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
 
 <body class="bg-zinc-950 text-zinc-400 antialiased min-h-screen relative overflow-x-hidden">
 
-    <div class="fixed top-0 left-0 w-full h-96 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none z-0"></div>
+    <div class="fixed top-0 left-0 w-full h-96 pointer-events-none z-0" style="background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(251,191,36,0.06), transparent);"></div>
 
-    <main class="min-h-screen w-full z-10 pb-32 relative">
+    <main class="min-h-screen w-full z-10 pb-0 relative">
 
-        <div id="view-dashboard" class="px-6 py-8 md:py-12 max-w-5xl mx-auto space-y-8 block animate-fade-in">
+        <div id="view-dashboard" class="space-y-6 block animate-fade-in">
 
             <!-- Header global presente em index.php -->
 
@@ -162,7 +162,7 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="glass-panel p-6 rounded-2xl">
+                <div class="glass-panel p-6 rounded-2xl lg:col-span-2">
                     <h3 class="text-sm font-medium text-white mb-6">Entradas e Saídas</h3>
                     <div class="h-64"><canvas id="grafico-linhas"></canvas></div>
                 </div>
@@ -185,6 +185,34 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
                         <canvas id="grafico-donut-despesas"></canvas>
                     </div>
                     <div id="lista-categorias-despesas" class="mt-4 space-y-1"></div>
+                </div>
+            </div>
+
+            <!-- Lista de Transações -->
+            <div class="glass-panel p-6 rounded-2xl animate-fade-in mt-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-medium text-white flex items-center gap-2">
+                        <iconify-icon icon="solar:list-check-linear" class="text-blue-500"></iconify-icon>
+                        Transações
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-zinc-400">
+                        <thead class="text-xs uppercase font-medium text-zinc-500 border-b border-zinc-800">
+                            <tr>
+                                <th class="px-4 py-3">Data</th>
+                                <th class="px-4 py-3">Descrição</th>
+                                <th class="px-4 py-3">Conta</th>
+                                <th class="px-4 py-3 text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-transacoes" class="divide-y divide-zinc-800">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
+                    <div id="msg-sem-transacoes" class="hidden text-center py-8 text-zinc-500">
+                        Nenhuma transação encontrada neste período.
+                    </div>
                 </div>
             </div>
         </div>

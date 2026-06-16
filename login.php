@@ -18,6 +18,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'login')
         $erro_login = 'credenciais';
     }
 }
+
+$erro_cadastro = null;
+$sucesso_cadastro = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'cadastrar') {
+    $nome_cad    = trim($_POST['nome_cad'] ?? '');
+    $email_cad   = trim($_POST['email_cad'] ?? '');
+    $senha_cad   = $_POST['senha_cad'] ?? '';
+    $confirmar   = $_POST['confirmar_cad'] ?? '';
+    if (!$nome_cad || !$email_cad || !$senha_cad) {
+        $erro_cadastro = 'campos';
+    } elseif ($senha_cad !== $confirmar) {
+        $erro_cadastro = 'senha_diferente';
+    } elseif (strlen($senha_cad) < 6) {
+        $erro_cadastro = 'senha_curta';
+    } else {
+        $resultado = cadastrarUsuario($nome_cad, $email_cad, $senha_cad);
+        if (isset($resultado['sucesso'])) {
+            fazerLogin($email_cad, $senha_cad);
+            header('Location: index.php');
+            exit;
+        } else {
+            $erro_cadastro = $resultado['erro'];
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -402,6 +427,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'login')
                 
                 <button type="submit" class="btn-login">Entrar</button>
             </form>
+            <p style="text-align:center; margin-top:14px; font-size:0.9rem; color: var(--cor-texto-secundario);">
+                Não tem conta?
+                <span class="link-esqueci" onclick="alternarFormulario('cadastro')">Criar conta</span>
+            </p>
+        </div>
+
+        <!-- Formulário de cadastro (oculto por padrão) -->
+        <div class="login-card" id="card-cadastro" style="display:none;">
+            <div class="login-header">
+                <div class="brand-logo"><i class="fas fa-tree"></i></div>
+                <div class="brand-text">
+                    <span class="brand-title">PEAK</span>
+                    <span class="brand-sub">Gestão Financeira</span>
+                </div>
+            </div>
+            <p style="text-align:center; color: var(--cor-texto-secundario); margin:0 0 12px 0;">Crie sua conta gratuitamente</p>
+
+            <?php if ($erro_cadastro): ?>
+                <div class="alert alert-error">
+                    <?php
+                    switch ($erro_cadastro) {
+                        case 'email_existe':   echo 'Este email já está cadastrado.'; break;
+                        case 'senha_diferente': echo 'As senhas não coincidem.'; break;
+                        case 'senha_curta':    echo 'A senha deve ter pelo menos 6 caracteres.'; break;
+                        case 'campos':         echo 'Preencha todos os campos.'; break;
+                        default:               echo 'Erro ao criar conta. Tente novamente.';
+                    }
+                    ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="login.php">
+                <input type="hidden" name="acao" value="cadastrar">
+
+                <div class="form-group">
+                    <label for="nome_cad">Nome:</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        <input type="text" id="nome_cad" name="nome_cad" required
+                               value="<?php echo htmlspecialchars($_POST['nome_cad'] ?? ''); ?>">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email_cad">Email:</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                        <input type="email" id="email_cad" name="email_cad" required
+                               value="<?php echo htmlspecialchars($_POST['email_cad'] ?? ''); ?>">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="senha_cad">Senha:</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="senha_cad" name="senha_cad" required minlength="6">
+                        <button type="button" class="toggle-senha" onclick="toggleSenha('senha_cad', this)"><i class="fas fa-eye-slash"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmar_cad">Confirmar Senha:</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="confirmar_cad" name="confirmar_cad" required minlength="6">
+                        <button type="button" class="toggle-senha" onclick="toggleSenha('confirmar_cad', this)"><i class="fas fa-eye-slash"></i></button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">Criar Conta</button>
+            </form>
+            <p style="text-align:center; margin-top:14px; font-size:0.9rem; color: var(--cor-texto-secundario);">
+                Já tem conta?
+                <span class="link-esqueci" onclick="alternarFormulario('login')">Entrar</span>
+            </p>
         </div>
         </div>
     </div>
@@ -442,6 +543,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'login')
     </div>
 
     <script>
+    function alternarFormulario(qual) {
+        var cardLogin   = document.querySelector('.login-card:not(#card-cadastro)');
+        var cardCadastro = document.getElementById('card-cadastro');
+        if (qual === 'cadastro') {
+            cardLogin.style.display = 'none';
+            cardCadastro.style.display = '';
+        } else {
+            cardLogin.style.display = '';
+            cardCadastro.style.display = 'none';
+        }
+    }
+    function toggleSenha(id, btn) {
+        var inp = document.getElementById(id);
+        var visivel = inp.getAttribute('type') === 'text';
+        inp.setAttribute('type', visivel ? 'password' : 'text');
+        var ic = btn.querySelector('i');
+        if (ic) ic.className = visivel ? 'fas fa-eye-slash' : 'fas fa-eye';
+    }
+    <?php if ($erro_cadastro): ?>
+    document.addEventListener('DOMContentLoaded', function(){ alternarFormulario('cadastro'); });
+    <?php endif; ?>
     function abrirEsqueciSenha(){
         var m = document.getElementById('modal-esqueci-senha');
         var emailLogin = document.getElementById('email');

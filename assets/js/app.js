@@ -92,10 +92,14 @@ class FinancasApp {
                     if (o) o.remove();
                 }
             });
+            let _resizeTimer;
             window.addEventListener('resize', () => {
-                if (painelSeletor.style.display !== 'none') {
-                    this.posicionarPainel(painelSeletor, botaoSeletor);
-                }
+                clearTimeout(_resizeTimer);
+                _resizeTimer = setTimeout(() => {
+                    if (painelSeletor.style.display !== 'none') {
+                        this.posicionarPainel(painelSeletor, botaoSeletor);
+                    }
+                }, 150);
             });
             if (btnPrev) {
                 btnPrev.addEventListener('click', () => {
@@ -170,7 +174,7 @@ class FinancasApp {
                 : new Date();
             return intl.format(base);
         }
-        return 'Mês atual';
+        return 'Mês Atual';
     }
 
     posicionarPainel(painel, botao) {
@@ -215,29 +219,32 @@ class FinancasApp {
 
     renderizarCalendario(container) {
         if (!container) return;
-        container.innerHTML = '';
         const ano = this.mesNav.getFullYear();
         const mes = this.mesNav.getMonth();
         const primeiro = new Date(ano, mes, 1);
         const inicioSemana = primeiro.getDay();
         const diasMes = new Date(ano, mes + 1, 0).getDate();
+        const hoje = new Date();
+        const hojeAno = hoje.getFullYear(), hojeMes = hoje.getMonth(), hojeDia = hoje.getDate();
+        const frag = document.createDocumentFragment();
         for (let i = 0; i < inicioSemana; i++) {
             const vazio = document.createElement('div');
             vazio.className = 'calendario-dia vazio';
-            container.appendChild(vazio);
+            frag.appendChild(vazio);
         }
         for (let d = 1; d <= diasMes; d++) {
             const data = new Date(ano, mes, d);
             const el = document.createElement('button');
             el.className = 'calendario-dia';
             el.textContent = String(d);
-            const hoje = new Date();
-            if (data.getFullYear() === hoje.getFullYear() && data.getMonth() === hoje.getMonth() && data.getDate() === hoje.getDate()) {
+            if (data.getFullYear() === hojeAno && data.getMonth() === hojeMes && data.getDate() === hojeDia) {
                 el.classList.add('hoje');
             }
             el.addEventListener('click', () => this.onSelecionarDia(data, container));
-            container.appendChild(el);
+            frag.appendChild(el);
         }
+        container.innerHTML = '';
+        container.appendChild(frag);
         this.atualizarRealceSelecao(container);
     }
 
@@ -419,13 +426,15 @@ class FinancasApp {
                     categoriasDespesasTotais[categoriaNome].valor += valor;
                 }
 
-                // Agregar por mês nos últimos 12 meses
+                // Agregar por mês nos últimos 12 meses (slice evita criar Date desnecessário)
                 const dtRaw = transacao.data_transacao || transacao.data;
-                if (dtRaw) {
-                    const d = new Date(dtRaw);
-                    const chave = `${d.getFullYear()}-${d.getMonth()}`;
+                if (dtRaw && !ehTransferencia) {
+                    // Formato: YYYY-MM-DD, pegar ano e mês diretamente da string
+                    const anoStr = dtRaw.slice(0, 4);
+                    const mesStr = dtRaw.slice(5, 7);
+                    const chave = `${anoStr}-${parseInt(mesStr, 10) - 1}`;
                     const idx = mapaMesIdx[chave];
-                    if (idx !== undefined && !ehTransferencia) {
+                    if (idx !== undefined) {
                         if (transacao.tipo === 'receita') receitasMensal[idx] += valor;
                         else if (transacao.tipo === 'despesa') despesasMensal[idx] += valor;
                     }
@@ -463,36 +472,35 @@ class FinancasApp {
 
     // Inicializar gráficos
     async inicializarGraficos() {
-        setTimeout(async () => {
-            const dados = await this.obterDadosFinanceiros();
-            await this.atualizarValoresDashboard(dados);
-            
-            const canvasLinhas = document.getElementById('grafico-linhas');
-            const canvasPizza = document.getElementById('grafico-pizza');
-            const canvasMensal = document.getElementById('grafico-mensal');
-            const canvasDonutRec = document.getElementById('grafico-donut-receitas');
-            const canvasDonutDes = document.getElementById('grafico-donut-despesas');
-            
-            if (canvasLinhas) {
-                await this.criarGraficoLinhas(dados);
-            }
-            
-            if (canvasPizza) {
-                await this.criarGraficoPizza(dados);
-            }
+        const dados = await this.obterDadosFinanceiros();
+        await this.atualizarValoresDashboard(dados);
 
-            if (canvasMensal) {
-                await this.criarGraficoMensal(dados);
-            }
+        const canvasLinhas = document.getElementById('grafico-linhas');
+        const canvasPizza = document.getElementById('grafico-pizza');
+        const canvasMensal = document.getElementById('grafico-mensal');
+        const canvasDonutRec = document.getElementById('grafico-donut-receitas');
+        const canvasDonutDes = document.getElementById('grafico-donut-despesas');
 
-            if (canvasDonutRec) {
-                await this.criarDonutReceitas(dados);
-            }
-            if (canvasDonutDes) {
-                await this.criarDonutDespesas(dados);
-            }
-            await this.atualizarListaCategorias(dados);
-        }, 100);
+        if (canvasLinhas) {
+            await this.criarGraficoLinhas(dados);
+        }
+
+        if (canvasPizza) {
+            await this.criarGraficoPizza(dados);
+        }
+
+        if (canvasMensal) {
+            await this.criarGraficoMensal(dados);
+        }
+
+        if (canvasDonutRec) {
+            await this.criarDonutReceitas(dados);
+        }
+        if (canvasDonutDes) {
+            await this.criarDonutDespesas(dados);
+        }
+        await this.atualizarListaCategorias(dados);
+        await this.atualizarListaTransacoes(dados);
     }
 
     // Atualizar valores do dashboard
@@ -623,9 +631,11 @@ class FinancasApp {
             dados = await this.obterDadosFinanceiros();
         }
 
-        // Destruir gráfico anterior se existir
+        // Se o gráfico já existe, apenas atualizar os dados
         if (this.graficoPizza) {
-            this.graficoPizza.destroy();
+            this.graficoPizza.data.datasets[0].data = [dados.receitas, dados.despesas];
+            this.graficoPizza.update('none');
+            return;
         }
 
         this.graficoPizza = new Chart(ctx, {
@@ -698,10 +708,6 @@ class FinancasApp {
             dados = await this.obterDadosFinanceiros();
         }
 
-        // Destruir gráfico existente se houver
-        if (this.graficoLinhas) {
-            this.graficoLinhas.destroy();
-        }
         // Construir séries reais dos últimos 7 dias a partir das transações
         const nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
         const hoje = new Date();
@@ -737,6 +743,15 @@ class FinancasApp {
                     }
                 }
             });
+        }
+
+        // Se o gráfico já existe, apenas atualizar os dados (evita destroy/create caro)
+        if (this.graficoLinhas) {
+            this.graficoLinhas.data.labels = labels;
+            this.graficoLinhas.data.datasets[0].data = receitasData;
+            this.graficoLinhas.data.datasets[1].data = despesasData;
+            this.graficoLinhas.update('none');
+            return;
         }
 
         this.graficoLinhas = new Chart(ctx, {
@@ -849,7 +864,14 @@ class FinancasApp {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!dados) dados = await this.obterDadosFinanceiros();
-        if (this.graficoMensal) this.graficoMensal.destroy();
+
+        if (this.graficoMensal) {
+            this.graficoMensal.data.labels = dados.mensal.labels;
+            this.graficoMensal.data.datasets[0].data = dados.mensal.receitas;
+            this.graficoMensal.data.datasets[1].data = dados.mensal.despesas;
+            this.graficoMensal.update('none');
+            return;
+        }
 
         this.graficoMensal = new Chart(ctx, {
             type: 'bar',
@@ -902,11 +924,18 @@ class FinancasApp {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!dados) dados = await this.obterDadosFinanceiros();
-        if (this.graficoDonutReceitas) this.graficoDonutReceitas.destroy();
 
         const labels = dados.categoriasReceitas.map(c=>c.nome);
         const valores = dados.categoriasReceitas.map(c=>c.valor);
         const cores = dados.categoriasReceitas.map(c=>c.cor || '#4CAF50');
+
+        if (this.graficoDonutReceitas) {
+            this.graficoDonutReceitas.data.labels = labels;
+            this.graficoDonutReceitas.data.datasets[0].data = valores;
+            this.graficoDonutReceitas.data.datasets[0].backgroundColor = cores;
+            this.graficoDonutReceitas.update('none');
+            return;
+        }
 
         this.graficoDonutReceitas = new Chart(ctx, {
             type: 'doughnut',
@@ -921,11 +950,18 @@ class FinancasApp {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!dados) dados = await this.obterDadosFinanceiros();
-        if (this.graficoDonutDespesas) this.graficoDonutDespesas.destroy();
 
         const labels = dados.categoriasDespesas.map(c=>c.nome);
         const valores = dados.categoriasDespesas.map(c=>c.valor);
         const cores = dados.categoriasDespesas.map(c=>c.cor || '#F44336');
+
+        if (this.graficoDonutDespesas) {
+            this.graficoDonutDespesas.data.labels = labels;
+            this.graficoDonutDespesas.data.datasets[0].data = valores;
+            this.graficoDonutDespesas.data.datasets[0].backgroundColor = cores;
+            this.graficoDonutDespesas.update('none');
+            return;
+        }
 
         this.graficoDonutDespesas = new Chart(ctx, {
             type: 'doughnut',
@@ -948,9 +984,13 @@ class FinancasApp {
             dados = await this.obterDadosFinanceiros();
         }
 
-        // Destruir gráfico anterior se existir
+        // Se o gráfico já existe, apenas atualizar os dados
         if (this.graficoBarras) {
-            this.graficoBarras.destroy();
+            this.graficoBarras.data.labels = dados.categorias.map(cat => cat.nome);
+            this.graficoBarras.data.datasets[0].data = dados.categorias.map(cat => cat.valor);
+            this.graficoBarras.data.datasets[0].backgroundColor = dados.categorias.map(cat => cat.cor);
+            this.graficoBarras.update('none');
+            return;
         }
 
         this.graficoBarras = new Chart(ctx, {
@@ -1029,12 +1069,12 @@ class FinancasApp {
         const renderizar = (containerId, categoriasArr) => {
             const container = document.getElementById(containerId);
             if (!container) return;
-            container.innerHTML = '';
             if (!categoriasArr || categoriasArr.length === 0) {
                 container.innerHTML = '<p class="sem-dados">Nenhuma categoria encontrada</p>';
                 return;
             }
             const total = categoriasArr.reduce((sum, c) => sum + c.valor, 0);
+            const frag = document.createDocumentFragment();
             categoriasArr.forEach(categoria => {
                 const percentual = total > 0 ? ((categoria.valor / total) * 100).toFixed(1) : 0;
                 const el = document.createElement('div');
@@ -1050,15 +1090,113 @@ class FinancasApp {
                     <div class="categoria-percentual">
                         <span>${percentual}%</span>
                         <div class="categoria-barra">
-                            <div class="categoria-progresso" style="width: ${percentual}%; background-color: ${categoria.cor}"></div>
+                            <div class="categoria-progresso" style="transform: scaleX(${percentual / 100}); background-color: ${categoria.cor}"></div>
                         </div>
                     </div>`;
-                container.appendChild(el);
+                frag.appendChild(el);
             });
+            container.innerHTML = '';
+            container.appendChild(frag);
         };
 
         renderizar('lista-categorias-receitas', dados.categoriasReceitas);
         renderizar('lista-categorias-despesas', dados.categoriasDespesas);
+    }
+
+    // Atualizar lista de transações
+    async atualizarListaTransacoes(dados = null) {
+        if (!dados) dados = await this.obterDadosFinanceiros();
+        
+        const container = document.getElementById('lista-transacoes');
+        const msgSemDados = document.getElementById('msg-sem-transacoes');
+        
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        // Usar todas as transações filtradas pelo período
+        const transacoes = dados.transacoes || [];
+
+        // Ordenar por data (mais recente primeiro) e depois por ID (decrescente) para desempate
+        transacoes.sort((a, b) => {
+            const strA = a.data_transacao || a.data || '';
+            const strB = b.data_transacao || b.data || '';
+            if (strB !== strA) return strB > strA ? 1 : -1;
+            return (b.id || 0) - (a.id || 0);
+        });
+
+        if (transacoes.length === 0) {
+            if (msgSemDados) msgSemDados.classList.remove('hidden');
+            return;
+        } else {
+            if (msgSemDados) msgSemDados.classList.add('hidden');
+        }
+
+        const frag = document.createDocumentFragment();
+        transacoes.forEach(t => {
+            // Ajustar fuso horário para exibição correta da data
+            const dataOriginal = new Date(t.data_transacao || t.data);
+            // Adicionar offset do fuso horário para garantir que a data seja exibida corretamente no dia local
+            const data = new Date(dataOriginal.valueOf() + dataOriginal.getTimezoneOffset() * 60000);
+
+            const dataFormatada = data.toLocaleDateString('pt-BR');
+            const valor = parseFloat(t.valor);
+            const valorFormatado = valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+            const tr = document.createElement('tr');
+            tr.className = 'transacao-linha transition-colors border-b last:border-0';
+
+            // Determinar tipo e ícone
+            const ehTransferencia = (t.eh_transferencia === 1) || (typeof t.observacoes === 'string' && t.observacoes.indexOf('TRANSFERENCIA:') === 0);
+            const ehSaida = t.tipo === 'despesa';
+
+            let icone, corIcone, bgIcone, corValor, sinal;
+
+            if (ehTransferencia) {
+                icone = 'fas fa-exchange-alt';
+                corIcone = 'text-blue-500';
+                bgIcone = 'bg-blue-500/10';
+                corValor = 'text-blue-400';
+                sinal = ehSaida ? '-' : '+';
+            } else if (ehSaida) {
+                icone = 'fas fa-arrow-down';
+                corIcone = 'text-red-500';
+                bgIcone = 'bg-red-500/10';
+                corValor = 'text-red-400';
+                sinal = '-';
+            } else {
+                icone = 'fas fa-arrow-up';
+                corIcone = 'text-emerald-500';
+                bgIcone = 'bg-emerald-500/10';
+                corValor = 'text-emerald-400';
+                sinal = '+';
+            }
+
+            // Conta e Categoria
+            const contaNome = t.conta_nome || 'Conta Padrão';
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap font-mono text-xs transacao-data">${dataFormatada}</td>
+                <td class="px-4 py-3 transacao-descricao">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full ${bgIcone} flex items-center justify-center shrink-0">
+                            <i class="${icone} ${corIcone}"></i>
+                        </div>
+                        <span class="font-medium">${t.descricao}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded text-xs font-medium transacao-conta-badge">
+                        ${contaNome}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-right font-medium ${corValor}">
+                    ${sinal} R$ ${valorFormatado}
+                </td>
+            `;
+            frag.appendChild(tr);
+        });
+        container.appendChild(frag);
     }
 
     // Atualizar gráficos com novos dados
@@ -1071,6 +1209,7 @@ class FinancasApp {
         await this.criarDonutReceitas(dados);
         await this.criarDonutDespesas(dados);
         await this.atualizarListaCategorias(dados);
+        await this.atualizarListaTransacoes(dados);
     }
 }
 

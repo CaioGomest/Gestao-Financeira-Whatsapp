@@ -158,7 +158,7 @@ function obterUrl(caminho) {
 // Variáveis globais
 let todasTransacoes = <?php echo json_encode($dados_iniciais['transacoes'], JSON_UNESCAPED_UNICODE); ?>;
 let filtroAtual = {
-    mes: null,
+    mes: new Date().getMonth() + 1,
     categoria: '',
     tipo: ''
 };
@@ -512,9 +512,10 @@ window.inicializarTransacoes = function() {
             filtroAtual.mes = this.value ? parseInt(this.value, 10) : null;
             filtrarTransacoes();
         });
-        // Por padrão, não filtrar por mês (mostrar todas as transações)
-        filtroAtual.mes = null;
-        filtroMes.value = '';
+        // Por padrão, filtrar pelo mês atual
+        const mesAtual = new Date().getMonth() + 1;
+        filtroAtual.mes = mesAtual;
+        filtroMes.value = mesAtual;
     }
 
     if (filtroCategoria) {
@@ -533,8 +534,6 @@ window.inicializarTransacoes = function() {
 
     carregarCategoriasFiltro();
     filtrarTransacoes();
-    atualizarResumo(todasTransacoes);
-    carregarTransacoes();
 
     const btnCancelar = document.getElementById('cancelar-selecao');
     const btnExcluir = document.getElementById('excluir-selecionadas');
@@ -565,7 +564,6 @@ if (document.readyState === 'loading') {
 (function primeiraRenderizacao(){
     try {
         filtrarTransacoes();
-        atualizarResumo(todasTransacoes);
     } catch(e) {}
 })();
 

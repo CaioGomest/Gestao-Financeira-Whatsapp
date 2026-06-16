@@ -14,7 +14,7 @@
     --cor-despesa: #F44336;
     --cor-transferencia: #fbbf24;
     --sombra-padrao: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --espaco-lateral-conteudo: 50px;
+    --espaco-lateral-conteudo: 16px;
 }
 
 body.tema-claro {
@@ -60,9 +60,8 @@ body {
     justify-content: space-between;
     gap: 12px;
     padding: 14px 16px;
-    background: rgba(24, 24, 27, 0.6);
+    background: rgba(24, 24, 27, 0.95);
     border-bottom: 1px solid rgba(255,255,255,0.06);
-    backdrop-filter: blur(8px);
 }
 body.tema-claro .app-header {
     background: rgba(255, 255, 255, 0.85);
@@ -115,7 +114,7 @@ body.tema-claro .app-header {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 .botao-ocultar:hover {
     background: rgba(255, 255, 255, 0.16);
@@ -149,8 +148,7 @@ body.tema-claro .app-avatar {
 
 .conteudo {
     flex: 1;
-    padding: 0 var(--espaco-lateral-conteudo);
-    padding-bottom: 80px; /* Espaço para o menu inferior */
+    padding: 16px var(--espaco-lateral-conteudo) 80px;
     max-width: 100%;
     overflow-x: hidden;
 }
@@ -172,6 +170,7 @@ body.tema-claro .app-avatar {
 /* Ocultar headers locais das páginas quando houver header global */
 .pagina-transacoes .transacoes-header { display: none; }
 
+
 .dashboard-header #btn-seletor-periodo {
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.35);
@@ -184,7 +183,7 @@ body.tema-claro .app-avatar {
     gap: 0.5rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .dashboard-header #btn-seletor-periodo:hover {
     background: rgba(255, 255, 255, 0.3);
@@ -202,11 +201,9 @@ body.tema-claro .dashboard-header #btn-seletor-periodo:hover {
 
 /* Painéis de vidro */
 .glass-panel {
-    background: rgba(24, 24, 27, 0.60);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(24, 24, 27, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
 }
 body.tema-claro .glass-panel {
     background: rgba(255, 255, 255, 0.90);
@@ -562,8 +559,10 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
 
 .categoria-progresso {
     height: 100%;
+    width: 100%;
     border-radius: 2px;
-    transition: width 0.3s ease;
+    transform-origin: left center;
+    transition: transform 0.3s ease;
 }
 
 /* Responsividade para o layout de donuts */
@@ -621,7 +620,7 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     position: relative;
     bottom: 20px;
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.3s;
 }
 
 .botao-adicionar:hover {
@@ -646,7 +645,7 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     text-decoration: none;
     box-shadow: 0 4px 10px rgba(var(--cor-destaque-rgb), 0.5);
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.3s;
     z-index: 101;
 }
 
@@ -670,12 +669,11 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s, visibility 0.3s;
     z-index: 89;
-    backdrop-filter: blur(2px);
 }
 
 .menu-overlay.ativo {
@@ -799,7 +797,9 @@ body.tema-claro .opcao-menu span {
     background-color: var(--cor-transferencia);
 }
 
-
+.opcao-menu.categoria i {
+    background-color: #8b5cf6;
+}
 
 .opcao-menu:hover {
     transform: scale(1.1);
@@ -826,63 +826,233 @@ body.tema-claro .opcao-menu span {
     transition: opacity 0.3s;
 }
 
-/* Admin */
-.admin-container { padding: 0; max-width: 100%; margin: 0; }
-.admin-abas { display: flex; gap: 10px; margin-bottom: 16px; }
+/* ─── Admin ────────────────────────────────────────────────── */
+.admin-container { padding: 0; max-width: 100%; margin: 0; font-size: 0.95rem; }
 .form-linha { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: center; }
-.form-grid .botao { grid-column: span 1; }
-.lista-tabela { margin-top: 16px; }
+.form-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: center; }
+
+/* Admin form layouts */
+.admin-novo-form    { display: flex; flex-direction: column; gap: 10px; }
+.admin-novo-campos  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.admin-card-header  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.admin-card-header .titulo-secao { margin-bottom: 0; }
+.admin-form-row     { display: grid; grid-template-columns: 160px 1fr 1fr; gap: 12px; align-items: end; margin-bottom: 14px; }
+.admin-form-acoes   { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-checkbox-grupo { margin: 12px 0; }
+.admin-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.95rem; }
+.admin-checkbox     { width: 18px; height: 18px; accent-color: var(--cor-destaque); cursor: pointer; flex-shrink: 0; }
+.admin-status       { font-size: 0.875rem; color: var(--cor-texto-secundario); padding: 4px 0; }
+.admin-descricao    { color: var(--cor-texto-secundario); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5; }
+.admin-resultado    { background: var(--cor-fundo); border: 1px solid var(--cor-borda); border-radius: 8px; padding: 12px 16px; font-size: 0.82rem; font-family: monospace; overflow: auto; margin-top: 14px; max-height: 300px; min-height: 0; }
+.admin-resultado:empty { display: none; }
+.botao-sm           { padding: 8px 14px !important; font-size: 0.85rem !important; }
+
+/* Admin table */
+.lista-tabela { margin-top: 14px; overflow: hidden; border-radius: 10px; border: 1px solid var(--cor-borda); }
 .tabela { width: 100%; border-collapse: collapse; }
-.tabela th, .tabela td { padding: 12px; border: 1px solid var(--cor-borda); text-align: left; }
-.tabela thead th { background: rgba(255,255,255,0.06); font-weight: 600; }
-.tabela tr:nth-child(even) { background-color: rgba(255,255,255,0.03); }
-.tabela td:last-child { text-align: right; }
+.tabela th,
+.tabela td { padding: 11px 14px; border-bottom: 1px solid var(--cor-borda); text-align: left; font-size: 0.875rem; }
+.tabela thead th {
+  background: rgba(0,0,0,0.12);
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--cor-texto-secundario);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+body.tema-claro .tabela thead th { background: rgba(0,0,0,0.03); }
+.tabela tbody tr:last-child td { border-bottom: none; }
+.tabela tbody tr:hover td { background: rgba(255,255,255,0.03); }
+body.tema-claro .tabela tbody tr:hover td { background: rgba(0,0,0,0.025); }
+.tabela td:last-child, .tabela th:last-child { text-align: right; }
+.tabela th.col-criado-em, .tabela td.col-criado-em { text-align: center !important; }
+.tabela code { font-size: 0.78rem; opacity: 0.65; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
+body.tema-claro .tabela code { background: rgba(0,0,0,0.06); }
 
-.admin-metrics { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px; }
-.admin-metrics .resumo-card { min-height: 88px; }
-.admin-metrics .resumo-valor { font-size: 1.35rem; }
+/* Linhas da tabela de transações do dashboard */
+.transacao-linha { border-color: rgba(255,255,255,0.06); }
+.transacao-linha:hover { background: rgba(255,255,255,0.04); }
+body.tema-claro .transacao-linha { border-color: var(--cor-borda); }
+body.tema-claro .transacao-linha:hover { background: rgba(0,0,0,0.025); }
 
-.admin-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.admin-toolbar .filtros-lista { margin: 0; }
-.admin-toolbar .filtro-btn { border-radius: 18px; }
-.admin-toolbar .filtro-btn.ativo { background: var(--cor-destaque); color: #fff; }
-.metrics-header { display: flex; gap: 10px; align-items: center; margin: 12px 0; justify-content: flex-end; }
-.metrics-header .form-select { max-width: 180px; }
-@media (max-width: 600px) {
-  .metrics-header { justify-content: space-between; }
-  .metrics-header .form-select { max-width: 100%; }
+.transacao-data { color: var(--cor-texto-secundario); }
+.transacao-descricao { color: var(--cor-texto); }
+
+.transacao-conta-badge {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+body.tema-claro .transacao-conta-badge {
+    background: rgba(0,0,0,0.06);
+    color: var(--cor-texto);
+    border: 1px solid var(--cor-borda);
 }
 
-.badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
-.status-ok { background: rgba(76,175,80,0.15); color: #4CAF50; border: 1px solid rgba(76,175,80,0.35); }
-.status-pending { background: rgba(244,67,54,0.15); color: #F44336; border: 1px solid rgba(244,67,54,0.35); }
-.status-error { background: rgba(255,193,7,0.15); color: #FFC107; border: 1px solid rgba(255,193,7,0.35); }
+/* Admin page header */
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 16px;
+}
+.admin-page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.admin-page-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(var(--cor-destaque-rgb),.25), rgba(var(--cor-destaque-rgb),.1));
+  color: var(--cor-destaque);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.admin-page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  margin: 0 0 2px;
+  line-height: 1.2;
+}
+.admin-page-sub {
+  font-size: 0.8rem;
+  color: var(--cor-texto-secundario);
+  margin: 0;
+}
 
-.icon-btn { 
-  background: rgba(255,255,255,0.08);
+/* Admin metrics */
+.admin-metrics { margin: 0 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.admin-metrics:empty { display: none; margin: 0; }
+.admin-metrics .resumo-card { min-height: 78px; padding: 1rem 1.15rem; transition: transform 0.15s ease; }
+.admin-metrics .resumo-valor { font-size: 1.3rem; }
+.admin-metrics .resumo-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(var(--cor-destaque-rgb),.22), rgba(var(--cor-destaque-rgb),.08));
+  color: var(--cor-destaque);
+}
+
+/* Admin toolbar — flat underline tab bar */
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.admin-toolbar .filtros-lista {
+  margin: 0;
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+}
+.admin-toolbar .filtro-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 9px 14px 11px;
+  color: var(--cor-texto-secundario);
+  font-weight: 500;
+  font-size: 0.845rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  box-shadow: none;
+  margin-bottom: -1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.admin-toolbar .filtro-btn i {
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+.admin-toolbar .filtro-btn:hover {
+  color: var(--cor-texto);
+  border-bottom-color: var(--cor-borda);
+  transform: none;
+}
+.admin-toolbar .filtro-btn.ativo {
+  color: var(--cor-destaque);
+  background: transparent;
+  border-bottom-color: var(--cor-destaque);
+  font-weight: 600;
+  box-shadow: none;
+}
+.admin-toolbar .filtro-btn.ativo i { opacity: 1; }
+.admin-toolbar .toolbar-direita {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+/* Period selector (admin) */
+.admin-container #seletor-bonito-periodo { position: relative; overflow: visible; z-index: 1000; }
+.seletor-bonito  { position: relative; }
+.seletor-botao {
+  background: var(--cor-fundo-secundario);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto);
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.seletor-botao:hover { border-color: var(--cor-destaque); transform: translateY(-1px); }
+
+/* Badges */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+.status-ok      { background: rgba(76,175,80,0.12);  color: #4CAF50; border: 1px solid rgba(76,175,80,0.3);  }
+.status-pending { background: rgba(244,67,54,0.12);  color: #F44336; border: 1px solid rgba(244,67,54,0.3);  }
+.status-error   { background: rgba(255,193,7,0.12);  color: #d4a017; border: 1px solid rgba(255,193,7,0.3);  }
+
+/* Icon buttons */
+.icon-btn {
+  background: rgba(255,255,255,0.06);
   color: var(--cor-texto);
   border: 1px solid var(--cor-borda);
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 7px 10px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: all 0.2s ease;
 }
-.icon-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
+.icon-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+body.tema-claro .icon-btn { background: rgba(0,0,0,0.04); }
+body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
 .icon-btn i { pointer-events: none; }
-.icon-btn.danger { color: #F44336; border-color: rgba(244,67,54,0.35); }
-.icon-btn.danger:hover { background: rgba(244,67,54,0.15); }
+.icon-btn.danger { color: #F44336; border-color: rgba(244,67,54,0.3); }
+.icon-btn.danger:hover { background: rgba(244,67,54,0.1); }
 
+/* Admin responsive */
 @media (max-width: 900px) {
-  .admin-toolbar { flex-direction: column; align-items: stretch; }
+  .admin-toolbar     { flex-direction: column; align-items: stretch; border-bottom: none; }
+  .admin-toolbar .filtros-lista { border-bottom: 1px solid var(--cor-borda); overflow-x: auto; flex-wrap: nowrap; }
+  .admin-toolbar .toolbar-direita { padding-bottom: 0; padding-top: 4px; }
+  .admin-novo-campos { grid-template-columns: repeat(2, 1fr); }
+  .admin-form-row    { grid-template-columns: 1fr; }
+  .admin-page-header { padding: 14px 0 12px; }
 }
-
-@media (max-width: 900px) {
-  .form-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 560px) {
-  .form-grid { grid-template-columns: 1fr; }
+  .admin-novo-campos { grid-template-columns: 1fr; }
+  .form-grid         { grid-template-columns: 1fr; }
+  .admin-toolbar .filtro-btn { padding: 8px 10px 10px; font-size: 0.8rem; }
+  .admin-toolbar .filtro-btn span { display: none; }
+  .admin-toolbar .filtro-btn i { font-size: 0.9rem; opacity: 1; }
 }
 
 .modal.ativo {
@@ -987,7 +1157,7 @@ body.tema-claro .opcao-menu span {
 }
 
 .botao-primario:hover {
-    background-color: #5a52e0;
+    background-color: #e6a800;
 }
 
 .botao-secundario:hover {
@@ -1117,15 +1287,13 @@ body.tema-claro .opcao-menu span {
 
 /* Header das Categorias */
 .categorias-header {
-    background: rgba(24, 24, 27, 0.65);
+    background: rgba(24, 24, 27, 0.95);
     color: var(--cor-texto);
-    padding: 32px 20px 28px;
+    padding: 24px var(--espaco-lateral-conteudo) 20px;
     border-radius: 0 0 30px 30px;
-    margin-bottom: 30px;
+    margin-bottom: 16px;
     position: relative;
     overflow: hidden;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 body.tema-claro .categorias-header {
@@ -1183,7 +1351,7 @@ body.tema-claro .categorias-header {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.25s ease;
+    transition: transform 0.25s ease, opacity 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
     box-shadow: none;
     font-size: 0.95rem;
 }
@@ -1223,7 +1391,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 20px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     font-size: 0.9rem;
     text-decoration: none;
 }
@@ -1262,7 +1430,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 15px;
     padding: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     border: 2px solid transparent;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     animation: fadeInUp 0.6s ease forwards;
@@ -1378,7 +1546,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 25px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     font-size: 1rem;
     display: inline-flex;
     align-items: center;
@@ -1504,8 +1672,8 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .transacoes-header {
     background: var(--cor-destaque);
     color: white;
-    padding: 40px 20px 30px;
-    margin-bottom: 30px;
+    padding: 24px var(--espaco-lateral-conteudo) 20px;
+    margin-bottom: 16px;
     border-radius: 0 0 30px 30px;
     position: relative;
     overflow: hidden;
@@ -1525,8 +1693,8 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .dashboard-header {
     background: var(--cor-destaque);
     border-radius: 0 0 30px 30px;
-    padding: 40px 20px 30px;
-    margin-bottom: 30px;
+    padding: 24px var(--espaco-lateral-conteudo) 20px;
+    margin-bottom: 16px;
     color: white;
     position: relative;
     overflow: visible;
@@ -1541,6 +1709,32 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
     opacity: 0.3;
 }
+
+/* Admin: header compacto (legado removido — usa .admin-page-header) */
+.admin-container .dashboard-header { display: none; }
+
+/* Admin card defaults */
+.admin-container .card {
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--cor-borda);
+}
+.admin-container .titulo-secao {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--cor-texto);
+  letter-spacing: 0.01em;
+}
+.admin-container .form-input,
+.admin-container .form-select {
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+.admin-container .botao { padding: 9px 18px; font-size: 0.9rem; border-radius: 8px; }
+.admin-container .form-label { font-size: 0.8rem; font-weight: 600; color: var(--cor-texto-secundario); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; display: block; }
 
 .dashboard-header .header-content {
     display: flex;
@@ -1586,11 +1780,10 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    backdrop-filter: blur(10px);
     position: relative;
     z-index: 10;
 }
@@ -1624,7 +1817,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 0.5rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .dashboard-header .seletor-botao:hover {
@@ -1740,7 +1933,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1775,7 +1968,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .dashboard-header .calendario-dia:hover { background: #ececf4; }
 .dashboard-header .calendario-dia.vazio { visibility: hidden; }
@@ -1867,7 +2060,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .seletor-painel .calendario-dia:hover { background: #ececf4; }
 .seletor-painel .calendario-dia.vazio { visibility: hidden; }
@@ -1972,7 +2165,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border: 1px solid rgba(255, 255, 255, 0.3);
     padding: 0.35rem 0.6rem;
     border-radius: 0.6rem;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     height: 36px;
 }
 
@@ -1995,7 +2188,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     padding: 0.45rem 0.7rem;
     border-radius: 0.5rem;
     font-size: 0.9rem;
-    backdrop-filter: blur(8px);
     appearance: none;
     color-scheme: dark;
     height: 36px;
@@ -2054,7 +2246,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     right: 0;
     bottom: 0;
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
     z-index: 1;
 }
 
@@ -2093,8 +2284,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .btn-nova-transacao:hover {
@@ -2108,7 +2298,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .resumo-card {
@@ -2119,7 +2309,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     display: flex;
     align-items: center;
     gap: 1rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     border: 1px solid var(--cor-borda);
 }
 
@@ -2148,7 +2338,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 }
 
 .resumo-card.saldo .resumo-icon {
-    background: linear-gradient(135deg, var(--cor-destaque), #8B7EFF);
+    background: var(--cor-destaque);
 }
 
 .resumo-info {
@@ -2182,8 +2372,8 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .transacoes-filtros {
     background: var(--cor-fundo-secundario);
     border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
     box-shadow: var(--sombra-padrao);
     border: 1px solid var(--cor-borda);
 }
@@ -2213,7 +2403,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 0.875rem;
     background: var(--cor-fundo);
     color: var(--cor-texto);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     cursor: pointer;
 }
 
@@ -2287,7 +2477,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 1rem;
     box-shadow: var(--sombra-padrao);
     border: 1px solid var(--cor-borda);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     animation: fadeInUp 0.6s ease forwards;
     opacity: 0;
     transform: translateY(20px);
@@ -2380,7 +2570,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     font-size: 0.8rem;
 }
 
@@ -2454,6 +2644,8 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     background: linear-gradient(135deg, var(--cor-destaque), #8B7EFF);
     opacity: 0.1;
     animation: float 6s ease-in-out infinite;
+    will-change: transform;
+    contain: layout style;
 }
 
 .circulo-1 {
@@ -2504,7 +2696,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -2633,9 +2825,11 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 
 .barra-progresso {
     height: 100%;
+    width: 100%;
     background-color: var(--cor-destaque);
     border-radius: 4px;
-    transition: width 0.3s;
+    transform-origin: left center;
+    transition: transform 0.3s;
 }
 
 .lista-passos {
@@ -2685,7 +2879,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     padding: 8px 0;
     width: 20%;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     border-radius: 12px;
     position: relative;
 }
@@ -2693,11 +2887,11 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .menu-item i {
     font-size: 1.2rem;
     margin-bottom: 5px;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .menu-item span {
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .menu-item.ativo {
@@ -2740,14 +2934,138 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 /* ===== PÁGINA DE PERFIL REESTRUTURADA ===== */
 
 .pagina-perfil {
-    min-height: 100vh;
-    background: linear-gradient(135deg, var(--cor-fundo) 0%, var(--cor-fundo-secundario) 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
-.pagina-perfil .container {
-    max-width: 720px;
-    margin: 0 auto;
-    margin-top: 12px;
+
+/* Hero */
+.perfil-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 24px 16px 20px;
+    background: var(--cor-fundo-secundario);
+    border: 1px solid var(--cor-borda);
+    border-radius: 20px;
+    text-align: center;
 }
+.perfil-hero-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid rgba(var(--cor-destaque-rgb), 0.5);
+    box-shadow: 0 0 0 5px rgba(var(--cor-destaque-rgb), 0.1);
+    object-fit: cover;
+    margin-bottom: 4px;
+}
+.perfil-hero-nome {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+.perfil-hero-email {
+    font-size: 0.88rem;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 8px;
+}
+.perfil-hero-saldo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(var(--cor-destaque-rgb), 0.08);
+    border: 1px solid rgba(var(--cor-destaque-rgb), 0.2);
+    border-radius: 12px;
+    padding: 10px 28px;
+    margin-bottom: 8px;
+}
+.perfil-hero-saldo-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cor-texto-secundario);
+}
+.perfil-hero-saldo-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.perfil-hero-saldo-valor.positivo { color: var(--cor-receita); }
+.perfil-hero-saldo-valor.negativo { color: var(--cor-despesa); }
+.perfil-hero-editar {
+    margin-top: 4px;
+    padding: 7px 18px;
+    background: rgba(var(--cor-destaque-rgb), 0.12);
+    border: 1px solid rgba(var(--cor-destaque-rgb), 0.3);
+    border-radius: 20px;
+    color: var(--cor-destaque);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.perfil-hero-editar:hover {
+    background: rgba(var(--cor-destaque-rgb), 0.22);
+    transform: translateY(-1px);
+}
+
+/* Toggle tema */
+.perfil-item-tema {
+    grid-template-columns: 44px 1fr 44px;
+}
+.perfil-tema-toggle {
+    width: 42px;
+    height: 24px;
+    background: var(--cor-borda);
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.25s;
+    pointer-events: none;
+    flex-shrink: 0;
+    justify-self: end;
+}
+.perfil-tema-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.perfil-tema-toggle.ativo {
+    background: var(--cor-destaque);
+}
+.perfil-tema-toggle.ativo::after {
+    transform: translateX(18px);
+}
+
+/* Ícones coloridos */
+.perfil-icon-export {
+    background: linear-gradient(135deg, rgba(79,172,254,0.25), rgba(0,242,254,0.12)) !important;
+    border-color: rgba(79,172,254,0.35) !important;
+}
+.perfil-icon-plano {
+    background: linear-gradient(135deg, rgba(108,99,255,0.25), rgba(139,126,255,0.12)) !important;
+    border-color: rgba(108,99,255,0.35) !important;
+}
+
+/* Footer */
+.perfil-footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--cor-texto-secundario);
+    opacity: 0.6;
+    padding: 4px 0 8px;
+}
+
+.pagina-perfil .container { all: unset; display: contents; }
 
 /* Seções e lista de ações */
 .perfil-section {
@@ -2776,7 +3094,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     color: inherit;
 }
 .perfil-item:hover {
@@ -2863,7 +3181,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 2rem;
     color: white;
     border: 4px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -2906,7 +3223,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     background: rgba(255, 255, 255, 0.15);
     padding: 15px;
     border-radius: 15px;
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -2930,11 +3246,10 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 12px;
     padding: 18px 20px;
     margin: 0 0 16px;
-    background: rgba(24,24,27,0.65);
+    background: rgba(24,24,27,0.95);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 14px;
     box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-    backdrop-filter: blur(10px);
 }
 .perfil-resumo-left {
     display: grid;
@@ -3016,7 +3331,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: transform 0.25s ease, opacity 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
@@ -3192,7 +3507,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
     font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s;
     box-sizing: border-box;
 }
 
@@ -3239,7 +3554,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     min-width: 100px;
 }
 
@@ -3294,7 +3609,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 
 /* Animação do modal */
 .modal {
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .modal.ativo .modal-conteudo {
@@ -3455,7 +3770,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 8px;
     cursor: pointer;
     margin-right: 10px;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     height: 36px;
     display: inline-flex;
     align-items: center;
@@ -3621,4 +3936,87 @@ body.tema-claro .modal input[type="file"]::file-selector-button {
     #contador-selecao {
         font-size: 0.85rem;
     }
+}
+
+/* Recorrência - container e botões de dia (theme-aware) */
+.container-config-recorrencia {
+    background: var(--cor-fundo-secundario);
+    border: 1px solid var(--cor-borda);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.btn-dia-mes {
+    background: var(--cor-fundo);
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto);
+    padding: 5px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: transform 0.2s, opacity 0.2s, background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn-dia-mes:hover { background: var(--cor-borda); }
+.btn-dia-mes.ativo {
+    background: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+    font-weight: bold;
+}
+
+.btn-dia-semana {
+    flex: 1;
+    background: var(--cor-fundo);
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto);
+    padding: 8px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: transform 0.2s, opacity 0.2s, background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn-dia-semana:hover { background: var(--cor-borda); }
+.btn-dia-semana.ativo {
+    background: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+    font-weight: bold;
+}
+
+/* input[type="month"] — mesmo estilo dos inputs de data */
+.campo-formulario input[type="month"] {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+    background: var(--cor-fundo-secundario);
+    color: var(--cor-texto);
+    font-size: 0.95em;
+    box-sizing: border-box;
+    color-scheme: dark;
+}
+body.tema-claro .campo-formulario input[type="month"] {
+    color-scheme: light;
+    background: #F3F4F6;
+}
+.campo-formulario input[type="month"]:focus {
+    border-color: var(--cor-destaque);
+    outline: none;
+}
+
+/* Checkbox definir término */
+.label-checkbox-fim {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--cor-texto-secundario);
+}
+.label-checkbox-fim input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--cor-destaque);
+    cursor: pointer;
 }

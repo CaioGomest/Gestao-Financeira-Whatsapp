@@ -59,44 +59,46 @@ function adicionarParametroTipo($base, $tipo) {
         }
     })();
     </script>
-    <nav class="menu-inferior">
-        <a href="<?php echo $base_app; ?>index.php?pagina=dashboard" class="menu-item">
-            <i class="fas fa-home"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="<?php echo $base_app; ?>index.php?pagina=transacoes" class="menu-item">
-            <i class="fas fa-exchange-alt"></i>
-            <span>Transações</span>
-        </a>
-        <div class="espaco-central"></div>
-        <a href="<?php echo $base_app; ?>index.php?pagina=categorias" class="menu-item">
-            <i class="fas fa-tags"></i>
-            <span>Categorias</span>
-        </a>
-        <a href="<?php echo $base_app; ?>index.php?pagina=perfil" class="menu-item">
-            <i class="fas fa-user"></i>
-            <span>Perfil</span>
-        </a>
-    </nav>
+    <?php if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') { ?>
+        <nav class="menu-inferior">
+            <a href="<?php echo $base_app; ?>index.php?pagina=dashboard" class="menu-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="<?php echo $base_app; ?>index.php?pagina=transacoes" class="menu-item">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transações</span>
+            </a>
+            <div class="espaco-central"></div>
+            <a href="<?php echo $base_app; ?>index.php?pagina=categorias" class="menu-item">
+                <i class="fas fa-tags"></i>
+                <span>Categorias</span>
+            </a>
+            <a href="<?php echo $base_app; ?>index.php?pagina=perfil" class="menu-item">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+        </nav>
 
-    <div class="menu-overlay" id="menu-overlay"></div>
-    <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()">
-        <i class="fas fa-plus"></i>
-    </a>
-    <div class="menu-circular" id="menu-circular">
-        <a href="#" class="opcao-menu receita" onclick="abrirModalTransacao('receita')" title="Nova Receita">
-            <i class="fas fa-arrow-up"></i>
-            <span>Receita</span>
+        <div class="menu-overlay" id="menu-overlay"></div>
+        <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()">
+            <i class="fas fa-plus"></i>
         </a>
-        <a href="#" class="opcao-menu despesa" onclick="abrirModalTransacao('despesa')" title="Nova Despesa">
-            <i class="fas fa-arrow-down"></i>
-            <span>Despesa</span>
-        </a>
-        <a href="#" class="opcao-menu transferencia" onclick="abrirModalTransacao('transferencia')" title="Transferência">
-            <i class="fas fa-exchange-alt"></i>
-            <span>Transferência</span>
-        </a>
-    </div>
+        <div class="menu-circular" id="menu-circular">
+            <a href="#" class="opcao-menu receita" onclick="abrirModalTransacao('receita')" title="Nova Receita">
+                <i class="fas fa-arrow-up"></i>
+                <span>Receita</span>
+            </a>
+            <a href="#" class="opcao-menu despesa" onclick="abrirModalTransacao('despesa')" title="Nova Despesa">
+                <i class="fas fa-arrow-down"></i>
+                <span>Despesa</span>
+            </a>
+            <a href="#" class="opcao-menu categoria" onclick="abrirModalCategoria()" title="Nova Categoria">
+                <i class="fas fa-tags"></i>
+                <span>Categoria</span>
+            </a>
+        </div>
+    <?php } ?>
     <script>
         function toggleMenuCircular() {
             var menu = document.getElementById('menu-circular');

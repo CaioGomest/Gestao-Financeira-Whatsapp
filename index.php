@@ -34,7 +34,9 @@ if ($pagina_inicial === '' && isset($_COOKIE['paginaAtual'])) {
     }
 }
 
-if ($pagina_inicial === '') { $pagina_inicial = 'dashboard'; }
+if ($pagina_inicial === '') {
+    $pagina_inicial = (isset($_SESSION['perfil']) && $_SESSION['perfil'] === 'admin') ? 'admin' : 'dashboard';
+}
 
 $arquivo_pagina_inicial = 'paginas/' . $pagina_inicial . '.php';
 if (!file_exists($arquivo_pagina_inicial)) {
@@ -196,9 +198,13 @@ if (!file_exists($arquivo_pagina_inicial)) {
                         }
                     });
 
+                    // Remover scripts de página anteriores para evitar acúmulo
+                    document.querySelectorAll('script[data-pagina-script]').forEach(function(s) { s.remove(); });
+
                     // Executar scripts embutidos após inserir o conteúdo
                     scriptsEncontrados.forEach(function(script) {
                         var novoScript = document.createElement('script');
+                        novoScript.setAttribute('data-pagina-script', pagina);
                         // Manter src quando existir; caso contrário, injetar o conteúdo
                         if (script.src) {
                             // Garantir caminho absoluto quando necessário
@@ -228,6 +234,12 @@ if (!file_exists($arquivo_pagina_inicial)) {
                             window.app.configurarEventos();
                             window.app.atualizarDescricaoPeriodo();
                             window.app.inicializarGraficos();
+                        }, 100);
+                    } else if (pagina === 'admin' && typeof window.app !== 'undefined') {
+                        console.log('Inicializando admin (seletor de período)...');
+                        setTimeout(function() {
+                            window.app.configurarEventos();
+                            window.app.atualizarDescricaoPeriodo && window.app.atualizarDescricaoPeriodo();
                         }, 100);
                     } else if (pagina === 'transacoes' && typeof window.inicializarTransacoes === 'function') {
                         console.log('Inicializando transações...');
@@ -282,56 +294,52 @@ if (!file_exists($arquivo_pagina_inicial)) {
         // A funcionalidade do app agora está em assets/js/app.js
         </script>
         
-        <!-- Menu de navegação inferior -->
-        <nav class="menu-inferior">
-            <a href="#" class="menu-item" onclick="carregarPagina('dashboard')">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
+        <?php if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') { ?>
+            <!-- Menu de navegação inferior -->
+            <nav class="menu-inferior">
+                <a href="#" class="menu-item" onclick="carregarPagina('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item" onclick="carregarPagina('transacoes')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transações</span>
+                </a>
+                <div class="espaco-central"></div>
+                <a href="#" class="menu-item" onclick="carregarPagina('categorias')">
+                    <i class="fas fa-tags"></i>
+                    <span>Categorias</span>
+                </a>
+                <a href="#" class="menu-item" onclick="carregarPagina('perfil')">
+                    <i class="fas fa-user"></i>
+                    <span>Perfil</span>
+                </a>
+            </nav>
+
+            <!-- Overlay escuro para o menu -->
+            <div class="menu-overlay" id="menu-overlay"></div>
+
+            <!-- Botão central flutuante -->
+            <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()">
+                <i class="fas fa-plus"></i>
             </a>
-            <a href="#" class="menu-item" onclick="carregarPagina('transacoes')">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Transações</span>
-            </a>
-            <div class="espaco-central"></div>
-            <a href="#" class="menu-item" onclick="carregarPagina('categorias')">
-                <i class="fas fa-tags"></i>
-                <span>Categorias</span>
-            </a>
-            <a href="#" class="menu-item" onclick="carregarPagina('perfil')">
-                <i class="fas fa-user"></i>
-                <span>Perfil</span>
-            </a>
-            <?php if (isset($_SESSION['perfil']) && $_SESSION['perfil'] === 'admin') { ?>
-            <a href="#" class="menu-item" onclick="carregarPagina('admin')">
-                <i class="fas fa-tools"></i>
-                <span>Admin</span>
-            </a>
-            <?php } ?>
-        </nav>
-        
-        <!-- Overlay escuro para o menu -->
-        <div class="menu-overlay" id="menu-overlay"></div>
-        
-        <!-- Botão central flutuante -->
-        <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()">
-            <i class="fas fa-plus"></i>
-        </a>
-        
-        <!-- Menu circular -->
-        <div class="menu-circular" id="menu-circular">
-            <a href="#" class="opcao-menu receita" data-tipo="receita" onclick="abrirModalTransacao('receita')">
-                <i class="fas fa-arrow-up"></i>
-                <span>Receita</span>
-            </a>
-            <a href="#" class="opcao-menu despesa" data-tipo="despesa" onclick="abrirModalTransacao('despesa')">
-                <i class="fas fa-arrow-down"></i>
-                <span>Despesa</span>
-            </a>
-            <a href="#" class="opcao-menu transferencia" data-tipo="transferencia" onclick="abrirModalTransacao('transferencia')">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Transferência</span>
-            </a>
-        </div>
+
+            <!-- Menu circular -->
+            <div class="menu-circular" id="menu-circular">
+                <a href="#" class="opcao-menu receita" data-tipo="receita" onclick="abrirModalTransacao('receita')">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Receita</span>
+                </a>
+                <a href="#" class="opcao-menu despesa" data-tipo="despesa" onclick="abrirModalTransacao('despesa')">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Despesa</span>
+                </a>
+                <a href="#" class="opcao-menu categoria" onclick="abrirModalCategoria()">
+                    <i class="fas fa-tags"></i>
+                    <span>Categoria</span>
+                </a>
+            </div>
+        <?php } ?>
         
         <script>
         // Função para alternar o menu circular

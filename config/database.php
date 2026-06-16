@@ -2,24 +2,26 @@
 require_once __DIR__ . '/config.php';
 
 class Database {
-    // private $host = 'localhost';
-    // private $db_name = 'u214219698_financias';
-    // private $username = 'u214219698_financias';
-    // private $password = 'ffeede!A12';
-    
-    private $host = 'localhost';
-    private $db_name = 'gestao_financeira';
-    private $username = 'root';
-    private $password = '';
-
-      
-    // private $host = 'localhost';
-    // private $db_name = 'fina';
-    // private $username = 'root';
-    // private $password = '';
-    
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     private $charset = 'utf8mb4';
     private $pdo;
+
+    public function __construct() {
+        if ($_SERVER['SERVER_NAME'] === 'localhost' || $_SERVER['SERVER_NAME'] === '127.0.0.1') {
+            $this->host     = 'localhost';
+            $this->db_name  = 'fina';
+            $this->username = 'root';
+            $this->password = '';
+        } else {
+            $this->host     = 'localhost';
+            $this->db_name  = 'u214219698_financias';
+            $this->username = 'u214219698_financias';
+            $this->password = 'ffeede!A12';
+        }
+    }
 
     public function conectar() {
         if ($this->pdo === null) {

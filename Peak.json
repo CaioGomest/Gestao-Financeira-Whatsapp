@@ -1,0 +1,1278 @@
+{
+  "name": "Peak",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fina-whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c2651e6d-c06d-4052-a4d9-7a30f3e473d5",
+      "name": "Webhook Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -6160,
+        128
+      ],
+      "webhookId": "fina-whatsapp-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok",
+        "options": {}
+      },
+      "id": "7382ed28-9378-4fe4-a2e3-92f9fd66d60e",
+      "name": "Respond 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -5920,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai dados da mensagem recebida pela Evolution API\nconst body = $input.first().json.body || $input.first().json;\n\n// Suporte a diferentes formatos da Evolution API v2\nconst data = body.data || body;\nconst message = data.message || {};\nconst key = data.key || {};\n\n// Número do remetente (remove @s.whatsapp.net)\nconst rawNumber = key.remoteJid || '';\nconst fromNumber = rawNumber.replace('@s.whatsapp.net', '').replace('@c.us', '');\nconst messageId = key.id || data.id || body.id || '';\n\n// Ignora mensagens de grupos\nif (rawNumber.includes('@g.us')) {\n  return [{ json: { ignore: true } }];\n}\n\n// Ignora mensagens enviadas pelo próprio bot\nif (key.fromMe) {\n  return [{ json: { ignore: true } }];\n}\n\n// Tipo de mensagem\nconst messageType = data.messageType || 'conversation';\nlet textContent = '';\nlet hasImage = false;\nlet imageBase64 = '';\nlet imageCaption = '';\n\nif (messageType === 'conversation' || messageType === 'extendedTextMessage') {\n  textContent = message.conversation || message.extendedTextMessage?.text || '';\n} else if (messageType === 'imageMessage') {\n  hasImage = true;\n  imageCaption = message.imageMessage?.caption || '';\n  // base64 da imagem pode vir em base64 ou jpegThumbnail\n  imageBase64 = data.message?.base64 || message.imageMessage?.jpegThumbnail || '';\n  textContent = imageCaption;\n} else if (messageType === 'audioMessage') {\n  textContent = '[AUDIO - não suportado ainda]';\n}\n\nconst pushName = data.pushName || 'Usuário';\n\nreturn [{\n  json: {\n    fromNumber,\n    messageId,\n    pushName,\n    textContent: textContent.trim(),\n    hasImage,\n    imageBase64,\n    messageType,\n    ignore: false,\n    rawBody: body\n  }\n}];\n"
+      },
+      "id": "b9817e89-aebb-496c-a7ad-e38c8ab226f3",
+      "name": "Extrair Dados da Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5696,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-ignore",
+              "leftValue": "={{ $json.ignore }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1a6013d9-0284-4e6b-990c-4ccf369b91f6",
+      "name": "Ignorar? (grupo/bot)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -5456,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://financias.stackcode.com.br/funcoes/usuario.php?api=usuario&acao=buscar_por_whatsapp&numero={{ $json.fromNumber }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ee41f300-d023-4762-b404-2c1b0ba9186c",
+      "name": "Buscar Usuário por WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -5216,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst statusCode = response.statusCode || 200;\nconst body = response.body || response;\n\n// Verifica se usuário existe e tem plano ativo\nconst usuario = typeof body === 'string' ? JSON.parse(body) : body;\n\nconst encontrado = !!(usuario && usuario.id);\nconst planoAtivo = encontrado && (usuario.plano_ativo === true || usuario.plano_status === 'ativo' || usuario.plano_status === 'ativa' || usuario.plano_status === 'trialing');\nconst planoExpirado = encontrado && usuario.plano_status === 'expirado';\n\n// Passa dados do contexto anterior\nconst ctx = $('Extrair Dados da Mensagem').first().json;\n\nreturn [{\n  json: {\n    ...ctx,\n    usuario_encontrado: encontrado,\n    plano_ativo: planoAtivo,\n    plano_expirado: planoExpirado,\n    usuario_id: usuario?.id || null,\n    usuario_nome: usuario?.nome || ctx.pushName,\n    usuario_sessao: usuario?.sessao_php || null,\n    plano_nome: usuario?.plano_nome || null,\n    conta_id_padrao: usuario?.conta_id_padrao || 1\n  }\n}];\n"
+      },
+      "id": "012f8e8e-0605-443e-a271-84b5afe6284c",
+      "name": "Validar Usuário e Plano",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4976,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-encontrado",
+              "leftValue": "={{ $json.usuario_encontrado }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            },
+            {
+              "id": "cond-ativo",
+              "leftValue": "={{ $json.plano_ativo }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "699903ee-ad6e-4cea-b858-7eef142c1b83",
+      "name": "Usuário Válido e Ativo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -4736,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nlet mensagem = '';\n\nif (!ctx.usuario_encontrado) {\n  mensagem = `Olá! 👋 Não encontrei uma conta vinculada a este número.\\n\\nPara usar o *Fina* pelo WhatsApp, acesse o painel e vincule seu número nas configurações:\\n👉 https://financias.stackcode.com.br/paginas/perfil.php`;\n} else if (ctx.plano_expirado) {\n  mensagem = `Olá, ${ctx.usuario_nome}! 😕\\n\\nSeu plano *expirou*. Para continuar gerenciando suas finanças pelo WhatsApp, renove sua assinatura:\\n👉 https://financias.stackcode.com.br/paginas/assinatura.php`;\n} else {\n  mensagem = `Olá, ${ctx.usuario_nome}! 😕\\n\\nSua conta está *inativa*. Acesse o painel para verificar:\\n👉 https://financias.stackcode.com.br`;\n}\n\nreturn [{ json: { ...ctx, mensagem_resposta: mensagem } }];\n"
+      },
+      "id": "84039980-bd1b-47af-802d-f12cbad81b50",
+      "name": "Montar Msg: Sem Acesso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4496,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://financias.stackcode.com.br/funcoes/transacoes.php?api=transacoes&acao=contexto_obter&chave_origem={{ $json.fromNumber }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e96c3a20-a57c-4d65-a3f9-45cb5f4f8cce",
+      "name": "API: Obter Contexto WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4496,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Usuário Válido e Ativo?').first().json;\nconst resp = $input.first().json;\n\nconst texto = (ctx.textContent || '').trim();\nconst contexto = resp.contexto || null;\nconst temContexto = !!resp.tem_contexto && !!contexto;\n\nconst parseValor = (input) => {\n  if (!input) return null;\n  const cleaned = String(input).replace(/R\\$/gi, '').replace(/\\s+/g, '').replace(/\\./g, '').replace(',', '.');\n  const n = parseFloat(cleaned);\n  return Number.isFinite(n) && n > 0 ? n : null;\n};\n\nlet usarContexto = false;\nlet transacao_payload = null;\nlet gpt_resultado = ctx.gpt_resultado || null;\n\nif (temContexto && contexto.payload_parcial?.aguardando_campo === 'valor') {\n  const valor = parseValor(texto);\n  if (valor) {\n    usarContexto = true;\n    transacao_payload = {\n      tipo: contexto.payload_parcial.tipo || 'despesa',\n      descricao: contexto.payload_parcial.descricao || 'Despesa',\n      valor,\n      data_transacao: contexto.payload_parcial.data_transacao || new Date().toISOString().split('T')[0],\n      categoria_id: contexto.payload_parcial.categoria_id || 1,\n      conta_id: contexto.payload_parcial.conta_id || ctx.conta_id_padrao || 1,\n      origem_message_id: ctx.messageId || null\n    };\n    gpt_resultado = {\n      tipo: transacao_payload.tipo,\n      descricao: transacao_payload.descricao,\n      valor,\n      data_transacao: transacao_payload.data_transacao,\n      categoria_sugerida: contexto.payload_parcial.categoria_sugerida || 'Outros'\n    };\n  }\n}\n\nreturn [{ json: { ...ctx, contexto_pendente: contexto, tem_contexto_pendente: temContexto, usar_contexto: usarContexto, transacao_payload, gpt_resultado } }];\n"
+      },
+      "id": "2fd9f56d-ddf6-4c3e-a03d-f994be03a920",
+      "name": "Resolver Contexto Pendente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4256,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.usar_contexto }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "12f8f7ef-257a-4278-af4b-f366e125f3f1",
+      "name": "Tem Valor de Contexto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -4016,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detecta a intenção do usuário pela mensagem\nconst ctx = $input.first().json;\nconst texto = (ctx.textContent || '').toLowerCase().trim();\n\nlet intencao = 'registrar_transacao'; // padrão\n\n// Consultas\nif (/^saldo$|^meu saldo|^ver saldo|^qual.*saldo/.test(texto)) {\n  intencao = 'consultar_saldo';\n} else if (/^extrato|^transações|^transacoes|^historico|^histórico|^gastos do mes|^gastos deste mes/.test(texto)) {\n  // No fluxo atual, extrato é respondido pelo resumo do mês para evitar fallback silencioso.\n  intencao = 'consultar_totais';\n} else if (/^resumo|^totais|^quanto.*gastei.*mes|^balanço|^balanco/.test(texto)) {\n  intencao = 'consultar_totais';\n} else if (/^ajuda|^help|^comandos|^o que.*fazer/.test(texto)) {\n  intencao = 'ajuda';\n} else if (ctx.hasImage) {\n  intencao = 'registrar_transacao_imagem';\n}\n\nreturn [{ json: { ...ctx, intencao } }];\n"
+      },
+      "id": "3ae293eb-5d5c-4bd7-a16a-a4f065cb8326",
+      "name": "Detectar Intenção",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4496,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intencao }}",
+                    "rightValue": "consultar_saldo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "saldo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intencao }}",
+                    "rightValue": "consultar_totais",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "totais"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.intencao }}",
+                    "rightValue": "ajuda",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ajuda"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "19cfd3d2-e0be-4a0b-8f97-9f042ec43e36",
+      "name": "Roteador de Intenção",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -4256,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://financias.stackcode.com.br/funcoes/transacoes.php?api=transacoes&acao=saldo_total",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ffa9088c-2dfa-45be-9d12-6f8c489cd97f",
+      "name": "API: Saldo Total",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4016,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://financias.stackcode.com.br/funcoes/transacoes.php?api=transacoes&acao=totais_mes&mes={{ $now.format('yyyy-MM') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "8baeb441-20e2-4ee2-bd65-6b0e168cbfad",
+      "name": "API: Totais do Mês",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4016,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Detectar Intenção').first().json;\nconst resp = $input.first().json;\nconst saldo = resp.saldo ?? 0;\nconst formatado = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(saldo);\n\nconst mensagem = `💰 *Seu saldo atual é: ${formatado}*\\n\\nPara ver o resumo do mês, envie *resumo*.`;\n\nreturn [{ json: { ...ctx, mensagem_resposta: mensagem } }];\n"
+      },
+      "id": "ca6e949b-e956-4d53-a0f7-3e86cb595fa9",
+      "name": "Montar Msg: Saldo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3776,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Detectar Intenção').first().json;\nconst resp = $input.first().json;\n\nconst fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0);\nconst mes = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });\n\nconst receitas = resp.receitas ?? 0;\nconst despesas = resp.despesas ?? 0;\nconst saldo = resp.saldo ?? (receitas - despesas);\n\nconst mensagem = `📊 *Resumo de ${mes}*\\n\\n✅ Receitas: ${fmt(receitas)}\\n❌ Despesas: ${fmt(despesas)}\\n━━━━━━━━━━━━\\n💰 Saldo: ${fmt(saldo)}\\n\\nPara registrar um gasto, envie algo como:\\n_\"Gastei 45 reais com almoço\"_`;\n\nreturn [{ json: { ...ctx, mensagem_resposta: mensagem } }];\n"
+      },
+      "id": "41638f89-d93c-4c01-a8da-b041a10e835c",
+      "name": "Montar Msg: Totais",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3776,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconst mensagem = `👋 Olá, *${ctx.usuario_nome}*! Aqui estão os comandos disponíveis:\\n\\n💬 *Registrar transação:*\\n_\"Gastei 50 no mercado\"_\\n_\"Recebi 3000 de salário\"_\\n_\"Paguei 120 de conta de luz\"_\\n\\n📷 *Enviar comprovante:*\\nMande uma foto e eu identifico automaticamente\\n\\n📊 *Consultas:*\\n• *saldo* — ver saldo atual\\n• *resumo* — totais do mês\\n\\nSimples assim! 🚀`;\n\nreturn [{ json: { ...ctx, mensagem_resposta: mensagem } }];\n"
+      },
+      "id": "aa27ee9e-7bda-464c-8233-5134292c7399",
+      "name": "Montar Msg: Ajuda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3776,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepara o prompt para o GPT processar a mensagem\nconst ctx = $input.first().json;\n\nconst hoje = new Date().toISOString().split('T')[0];\n\nconst systemPrompt = `Você é um assistente de finanças pessoais integrado ao sistema Fina via WhatsApp.\nSua função é extrair informações financeiras de mensagens do usuário e retornar um JSON estruturado.\n\nRetorne APENAS JSON válido.\nFormato de saída:\n{\n  \"status\": \"TRANSACAO_COMPLETA\" | \"TRANSACAO_INCOMPLETA\" | \"NAO_ENTENDIDO\",\n  \"tipo\": \"receita\" | \"despesa\" | null,\n  \"valor\": number | null,\n  \"descricao\": string | null,\n  \"data_transacao\": \"YYYY-MM-DD\" | null,\n  \"categoria_sugerida\": string | null,\n  \"campos_faltantes\": string[],\n  \"pergunta_sugerida\": string,\n  \"confianca\": number\n}\n\nRegras:\n- Se faltarem dados, use status TRANSACAO_INCOMPLETA.\n- Para frase tipo \"assinei netflix\" classifique como despesa com descricao \"Assinatura Netflix\" e valor null.\n- Se só faltar valor, campos_faltantes deve conter apenas [\"valor\"] e pergunta_sugerida deve perguntar o valor.\n- valor deve ser número decimal positivo quando existir.\n- data_transacao: se não mencionado, use ${hoje}.\n- categoria_sugerida em português.\n- Se não for mensagem financeira, use status NAO_ENTENDIDO.\n`;\n\nconst userMessage = ctx.hasImage\n  ? `O usuário enviou uma imagem de comprovante com a legenda: \"${ctx.textContent || 'sem legenda'}\". Extraia os dados da transação.`\n  : ctx.textContent;\n\nreturn [{\n  json: {\n    ...ctx,\n    gpt_system: systemPrompt,\n    gpt_user: userMessage\n  }\n}];\n"
+      },
+      "id": "9cb62665-32a1-4009-abbc-3eb2b297ba89",
+      "name": "Preparar Prompt GPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4016,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'llama-3.3-70b-versatile', temperature: 0, messages: [ { role: 'system', content: $('Preparar Prompt GPT').first().json.gpt_system }, { role: 'user', content: $('Preparar Prompt GPT').first().json.gpt_user } ] }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "108c1d81-8ec3-4a0f-a454-281795dadf09",
+      "name": "Groq: Extrair Transação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3776,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Preparar Prompt GPT').first().json;\nconst gptResp = $input.first().json;\n\nlet parsed = null;\nlet erro = null;\n\nconst toNumber = (v) => {\n  if (v === null || v === undefined || v === '') return null;\n  if (typeof v === 'number') return Number.isFinite(v) ? v : null;\n  const raw = String(v).replace(/R\\$/gi, '').replace(/\\s+/g, '').replace(/\\./g, '').replace(',', '.');\n  const n = parseFloat(raw);\n  return Number.isFinite(n) ? n : null;\n};\n\ntry {\n  const content = gptResp.choices?.[0]?.message?.content || '{}';\n  const clean = content.replace(/```json|```/g, '').trim();\n  parsed = JSON.parse(clean);\n} catch (e) {\n  erro = 'PARSE_ERROR';\n}\n\nif (parsed?.erro) {\n  erro = parsed.erro;\n}\n\nif (parsed) {\n  parsed.valor = toNumber(parsed.valor);\n  parsed.status = parsed.status || (parsed.tipo && parsed.descricao && parsed.valor ? 'TRANSACAO_COMPLETA' : 'TRANSACAO_INCOMPLETA');\n  parsed.campos_faltantes = Array.isArray(parsed.campos_faltantes) ? parsed.campos_faltantes : [];\n\n  if (!parsed.data_transacao) {\n    parsed.data_transacao = new Date().toISOString().split('T')[0];\n  }\n\n  if (parsed.status === 'TRANSACAO_INCOMPLETA' && parsed.campos_faltantes.length === 0) {\n    if (!parsed.valor) parsed.campos_faltantes.push('valor');\n    if (!parsed.tipo) parsed.campos_faltantes.push('tipo');\n    if (!parsed.descricao) parsed.campos_faltantes.push('descricao');\n  }\n}\n\nif (parsed?.status === 'NAO_ENTENDIDO') {\n  erro = 'NAO_ENTENDIDO';\n}\n\nif (parsed?.status === 'TRANSACAO_INCOMPLETA' && parsed?.campos_faltantes?.includes('valor')) {\n  erro = 'FALTANDO_VALOR';\n}\n\nconst valido = !erro && parsed && parsed.status === 'TRANSACAO_COMPLETA' && parsed.tipo && parsed.valor && parsed.descricao;\n\nreturn [{\n  json: {\n    ...ctx,\n    gpt_resultado: parsed,\n    gpt_valido: valido,\n    gpt_erro: erro\n  }\n}];\n"
+      },
+      "id": "7616ef5c-78ce-4deb-8376-a438ac905e5a",
+      "name": "Processar Resposta GPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3536,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.gpt_valido }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "631f04db-7aaa-4a65-bc59-1e0f7215f6d1",
+      "name": "GPT Entendeu?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3296,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://financias.stackcode.com.br/funcoes/ia.php?api=ia&acao=categorizar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ itens: [ { descricao: $json.gpt_resultado.descricao, valor: $json.gpt_resultado.valor, tipo: $json.gpt_resultado.tipo } ] }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "67d0e25e-e708-41cb-a507-91b4e4289fad",
+      "name": "API: Categorizar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3056,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Processar Resposta GPT').first().json;\nconst catResp = $input.first().json;\n\nlet categoriaId = null;\nlet categoriaNome = ctx.gpt_resultado?.categoria_sugerida || 'Outros';\n\nif (catResp.categorias && catResp.categorias.length > 0) {\n  categoriaId = catResp.categorias[0].id;\n  categoriaNome = catResp.categorias[0].nome;\n}\n\nreturn [{\n  json: {\n    ...ctx,\n    categoria_id: categoriaId,\n    categoria_nome: categoriaNome\n  }\n}];\n"
+      },
+      "id": "fb46ba36-5833-4e1e-a770-9697a78891e3",
+      "name": "Resolver Categoria",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2816,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.categoria_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "548f7362-eeaa-4f06-b4af-7ec326e33c7c",
+      "name": "Categoria Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2576,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://financias.stackcode.com.br/funcoes/transacoes.php?api=categorias&acao=salvar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ nome: $json.categoria_nome, tipo: $json.gpt_resultado.tipo }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "58f692e0-c7e0-4b46-b77e-74fbb9f964ca",
+      "name": "API: Criar Categoria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2336,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determina o categoria_id final (existente ou recém criada)\nconst ctx = $('Resolver Categoria').first().json;\nlet categoriaId = ctx.categoria_id;\n\n// Se veio do branch de criação\ntry {\n  const criada = $('API: Criar Categoria').first().json;\n  if (criada.sucesso && criada.id) {\n    categoriaId = criada.id;\n  }\n} catch(e) { /* branch de categoria existente */ }\n\nconst transacao = {\n  tipo: ctx.gpt_resultado.tipo,\n  descricao: ctx.gpt_resultado.descricao,\n  valor: ctx.gpt_resultado.valor,\n  data_transacao: ctx.gpt_resultado.data_transacao || new Date().toISOString().split('T')[0],\n  categoria_id: categoriaId,\n  conta_id: ctx.conta_id_padrao || 1,\n  origem_message_id: ctx.messageId || null\n};\n\nreturn [{ json: { ...ctx, transacao_payload: transacao } }];\n"
+      },
+      "id": "dda047a1-a4b0-4a7b-991f-631a1d5de92a",
+      "name": "Montar Payload Transação",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2096,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://financias.stackcode.com.br/funcoes/transacoes.php?api=transacoes&acao=salvar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.transacao_payload) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "bd362dfb-717e-47c0-ab3f-eb571dfc0aaa",
+      "name": "API: Salvar Transação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1856,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://financias.stackcode.com.br/funcoes/transacoes.php?api=transacoes&acao=contexto_limpar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chave_origem: $json.fromNumber }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "4fb7f783-79b6-4f6a-aea7-5fd7412f86d7",
+      "name": "API: Limpar Contexto WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1712,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconst resp = $input.first().json;\n\nconst fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);\n\nif (!resp.sucesso) {\n  return [{ json: { ...ctx, mensagem_resposta: `❌ Erro ao salvar a transação. Tente novamente ou acesse o painel.`, salvo: false } }];\n}\n\nconst t = ctx.transacao_payload;\nconst emoji = t.tipo === 'receita' ? '✅' : '❌';\nconst tipoLabel = t.tipo === 'receita' ? 'Receita' : 'Despesa';\n\nconst data = new Date(t.data_transacao + 'T12:00:00').toLocaleDateString('pt-BR');\nconst categoria = ctx.categoria_nome || ctx.gpt_resultado?.categoria_sugerida || 'Outros';\nconst duplicada = resp.resultado?.origem_message_id && resp.resultado?.id && resp.resultado.origem_message_id === t.origem_message_id;\n\nconst mensagem = `${emoji} *${tipoLabel} registrada!*\\n\\n📝 ${t.descricao}\\n💰 ${fmt(t.valor)}\\n🏷️ ${categoria}\\n📅 ${data}${duplicada ? '\\n\\nℹ️ Mensagem duplicada detectada, mantive apenas um registro.' : ''}\\n\\nPara ver seu saldo, envie *saldo*.`;\n\nreturn [{ json: { ...ctx, mensagem_resposta: mensagem, salvo: true } }];\n"
+      },
+      "id": "2c0cbf63-07e6-41b0-bed9-f6c1c03f58e5",
+      "name": "Montar Msg: Transação Salva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1616,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconst erro = ctx.gpt_erro;\nconst texto = (ctx.textContent || '').trim();\n\nlet mensagem = '';\nif (erro === 'FALTANDO_VALOR') {\n  const desc = ctx.gpt_resultado?.descricao || 'essa transação';\n  mensagem = `Perfeito, entendi: *${desc}*.\\n\\nQual foi o valor? (ex: 39,90)`;\n} else if (erro === 'NAO_ENTENDIDO') {\n  if (texto.length <= 3) {\n    mensagem = `Consegue me mandar com mais detalhes?\\n\\nExemplos:\\n• _\"Gastei 50 no mercado\"_\\n• _\"Recebi 1500 de freelance\"_`;\n  } else {\n    mensagem = `Não consegui identificar uma transação nessa frase.\\n\\nTente algo como:\\n• _\"Gastei 50 reais no mercado\"_\\n• _\"Recebi 1500 de freelance\"_\\n• _\"Paguei 80 de gasolina\"_\\n\\nSe preferir, envie *ajuda*.`;\n  }\n} else {\n  mensagem = `⚠️ Houve um problema ao processar sua mensagem. Tente novamente em instantes.`;\n}\n\nreturn [{ json: { ...ctx, mensagem_resposta: mensagem } }];\n"
+      },
+      "id": "a8bc0b65-e731-424d-a3c3-e8f0204b34db",
+      "name": "Montar Msg: Não Entendeu",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3056,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://financias.stackcode.com.br/funcoes/transacoes.php?api=transacoes&acao=contexto_salvar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Cookie",
+              "value": "={{ 'PHPSESSID=' + $json.usuario_sessao }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chave_origem: $json.fromNumber, estado: $json.gpt_erro === 'FALTANDO_VALOR' ? 'pendente' : 'ignorar', ttl_minutos: 20, payload_parcial: { tipo: $json.gpt_resultado?.tipo || 'despesa', descricao: $json.gpt_resultado?.descricao || 'Despesa', categoria_sugerida: $json.gpt_resultado?.categoria_sugerida || 'Outros', data_transacao: $json.gpt_resultado?.data_transacao || $now.format('yyyy-MM-dd'), conta_id: $json.conta_id_padrao || 1, aguardando_campo: 'valor' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "f2114f74-4b5f-4d7c-8038-0709698e9fcd",
+      "name": "API: Salvar Contexto WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3056,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge de todas as saídas para envio via Evolution API\n// Pega o dado de qualquer nó anterior que tenha mensagem_resposta\nconst items = $input.all();\nconst item = items.find(i => i.json.mensagem_resposta) || items[0];\n\nreturn [{ json: item.json }];\n"
+      },
+      "id": "839afa57-bdeb-4539-90a0-e95baf9146c8",
+      "name": "Merge Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1376,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://whatsapp-evolutionapi-evolution-api.90xgiq.easypanel.host/message/sendText/fina-instance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.fromNumber, text: $json.mensagem_resposta }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "faa23a35-b1d1-4999-bee8-f0fc328e96a5",
+      "name": "Evolution API: Enviar Resposta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1136,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://whatsapp-evolutionapi-evolution-api.90xgiq.easypanel.host/message/sendText/fina-instance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.fromNumber, text: $json.mensagem_resposta }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "ecee079b-4543-4576-b3aa-a970a42220a6",
+      "name": "Evolution API: Sem Acesso",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4256,
+        288
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Evolution API": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extrair Dados da Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados da Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Ignorar? (grupo/bot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ignorar? (grupo/bot)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Buscar Usuário por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Usuário por WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Validar Usuário e Plano",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Usuário e Plano": {
+      "main": [
+        [
+          {
+            "node": "Usuário Válido e Ativo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usuário Válido e Ativo?": {
+      "main": [
+        [
+          {
+            "node": "API: Obter Contexto WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar Msg: Sem Acesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Obter Contexto WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Resolver Contexto Pendente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Contexto Pendente": {
+      "main": [
+        [
+          {
+            "node": "Tem Valor de Contexto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem Valor de Contexto?": {
+      "main": [
+        [
+          {
+            "node": "API: Salvar Transação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Detectar Intenção",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Msg: Sem Acesso": {
+      "main": [
+        [
+          {
+            "node": "Evolution API: Sem Acesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Intenção": {
+      "main": [
+        [
+          {
+            "node": "Roteador de Intenção",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Roteador de Intenção": {
+      "main": [
+        [
+          {
+            "node": "API: Saldo Total",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: Totais do Mês",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar Msg: Ajuda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Prompt GPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Saldo Total": {
+      "main": [
+        [
+          {
+            "node": "Montar Msg: Saldo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Totais do Mês": {
+      "main": [
+        [
+          {
+            "node": "Montar Msg: Totais",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Msg: Saldo": {
+      "main": [
+        [
+          {
+            "node": "Merge Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Msg: Totais": {
+      "main": [
+        [
+          {
+            "node": "Merge Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Msg: Ajuda": {
+      "main": [
+        [
+          {
+            "node": "Merge Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processar Resposta GPT": {
+      "main": [
+        [
+          {
+            "node": "GPT Entendeu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT Entendeu?": {
+      "main": [
+        [
+          {
+            "node": "API: Categorizar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "API: Salvar Contexto WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Categorizar": {
+      "main": [
+        [
+          {
+            "node": "Resolver Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver Categoria": {
+      "main": [
+        [
+          {
+            "node": "Categoria Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categoria Existe?": {
+      "main": [
+        [
+          {
+            "node": "API: Criar Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar Payload Transação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Criar Categoria": {
+      "main": [
+        [
+          {
+            "node": "Montar Payload Transação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Payload Transação": {
+      "main": [
+        [
+          {
+            "node": "API: Salvar Transação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Salvar Transação": {
+      "main": [
+        [
+          {
+            "node": "API: Limpar Contexto WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Limpar Contexto WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Montar Msg: Transação Salva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Msg: Transação Salva": {
+      "main": [
+        [
+          {
+            "node": "Merge Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Msg: Não Entendeu": {
+      "main": [
+        [
+          {
+            "node": "Merge Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API: Salvar Contexto WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Montar Msg: Não Entendeu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Final": {
+      "main": [
+        [
+          {
+            "node": "Evolution API: Enviar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "42b447de-e460-40d1-8446-ccb6e7767099",
+  "meta": {
+    "instanceId": "0c1addfda0db465e6b623d73bffb06de5d648bb7daa5b543e80ba7f6861f2a68"
+  },
+  "id": "fOCqZawDpOhQYh7G",
+  "tags": []
+}

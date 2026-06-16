@@ -1,139 +1,183 @@
 <?php
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/usuario.php';
 
-if (!function_exists('aplicarMigracoes')) {
-function aplicarMigracoes() {
+define('MIGRATIONS_DIR', __DIR__ . '/../migrations');
+
+/**
+ * Garante que a tabela de controle de migrações existe
+ */
+function garantirTabelaMigrations() {
     global $database;
-    $resultado = [];
+    $database->query("CREATE TABLE IF NOT EXISTS migrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        versao VARCHAR(20) NOT NULL UNIQUE,
+        arquivo VARCHAR(100) NOT NULL,
+        aplicada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+}
 
+/**
+ * Retorna lista de arquivos de migração ordenados por versão
+ */
+function listarArquivosMigrations() {
+    $dir = MIGRATIONS_DIR;
+    if (!is_dir($dir)) return [];
+    $arquivos = glob($dir . '/v*.sql');
+    if (!$arquivos) return [];
+    usort($arquivos, function($a, $b) {
+        preg_match('/v(\d+)/', basename($a), $ma);
+        preg_match('/v(\d+)/', basename($b), $mb);
+        return (int)($ma[1] ?? 0) - (int)($mb[1] ?? 0);
+    });
+    return $arquivos;
+}
+
+/**
+ * Retorna versões já aplicadas no banco
+ */
+function versoeAplicadas() {
+    global $database;
     try {
-        $database->beginTransaction();
+        $rows = $database->select("SELECT versao, aplicada_em FROM migrations ORDER BY versao");
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r['versao']] = $r['aplicada_em'];
+        }
+        return $map;
+    } catch (Exception $e) {
+        return [];
+    }
+}
 
-        $colPerfil = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'perfil'");
-        if (empty($colPerfil)) {
-            $database->query("ALTER TABLE usuarios ADD COLUMN perfil ENUM('admin','usuario') DEFAULT 'usuario' AFTER email_verificado");
-            $resultado[] = 'usuarios.perfil';
+/**
+ * Lista todas as migrações com status
+ */
+function listarMigrations() {
+    global $database;
+    garantirTabelaMigrations();
+    $aplicadas = versoeAplicadas();
+    $arquivos = listarArquivosMigrations();
+
+    $resultado = [];
+    foreach ($arquivos as $path) {
+        $arquivo = basename($path);
+        preg_match('/^(v\d+)/', $arquivo, $m);
+        $versao = $m[1] ?? $arquivo;
+        $resultado[] = [
+            'versao'      => $versao,
+            'arquivo'     => $arquivo,
+            'status'      => isset($aplicadas[$versao]) ? 'aplicada' : 'pendente',
+            'aplicada_em' => $aplicadas[$versao] ?? null,
+        ];
+    }
+    return $resultado;
+}
+
+/**
+ * Erros MySQL que indicam "já existe" — não são fatais numa migração
+ * 1060 = Duplicate column name
+ * 1050 = Table already exists
+ * 1061 = Duplicate key name
+ * 1062 = Duplicate entry (unique constraint)
+ */
+function erroJaExiste(Exception $e) {
+    $msg = $e->getMessage();
+    foreach ([1060, 1050, 1061, 1062] as $code) {
+        if (strpos($msg, (string)$code) !== false) return true;
+    }
+    // MariaDB/MySQL mensagem literal
+    foreach (['Duplicate column', 'already exists', 'Table \'', "already exist"] as $needle) {
+        if (stripos($msg, $needle) !== false) return true;
+    }
+    return false;
+}
+
+/**
+ * Aplica todas as migrações pendentes
+ */
+function aplicarMigrations() {
+    global $database;
+    garantirTabelaMigrations();
+    $aplicadas = versoeAplicadas();
+    $arquivos = listarArquivosMigrations();
+    $log = [];
+    $erros = [];
+
+    foreach ($arquivos as $path) {
+        $arquivo = basename($path);
+        preg_match('/^(v\d+)/', $arquivo, $m);
+        $versao = $m[1] ?? $arquivo;
+
+        if (isset($aplicadas[$versao])) {
+            $log[] = "[{$versao}] já aplicada — pulando";
+            continue;
         }
 
-        $colStripePrice = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'planos' AND column_name = 'stripe_price_id'");
-        if (empty($colStripePrice)) {
-            $database->query("ALTER TABLE planos ADD COLUMN stripe_price_id VARCHAR(100) NULL AFTER preco");
-            $resultado[] = 'planos.stripe_price_id';
-        }
+        $sql = file_get_contents($path);
+        // Remove linhas de comentário e quebra em statements
+        $linhas = array_filter(explode("\n", $sql), function($l) {
+            return strpos(trim($l), '--') !== 0;
+        });
+        $statements = array_filter(array_map('trim', explode(';', implode("\n", $linhas))));
 
-        $colStripeProduct = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'planos' AND column_name = 'stripe_product_id'");
-        if (empty($colStripeProduct)) {
-            $database->query("ALTER TABLE planos ADD COLUMN stripe_product_id VARCHAR(100) NULL AFTER stripe_price_id");
-            $resultado[] = 'planos.stripe_product_id';
-        }
-
-        $colDuracao = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'planos' AND column_name = 'duracao_meses'");
-        if (empty($colDuracao)) {
-            $database->query("ALTER TABLE planos ADD COLUMN duracao_meses INT NOT NULL DEFAULT 1 AFTER preco");
-            $resultado[] = 'planos.duracao_meses';
-        }
-
-        $colCustomerId = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'assinaturas' AND column_name = 'customer_id'");
-        if (empty($colCustomerId)) {
-            $database->query("ALTER TABLE assinaturas ADD COLUMN customer_id VARCHAR(100) NULL AFTER gateway_transacao_id");
-            $resultado[] = 'assinaturas.customer_id';
-        }
-
-        $tblConfigSistema = $database->select("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'configuracoes_sistema'");
-        if (empty($tblConfigSistema)) {
-            $database->query("CREATE TABLE configuracoes_sistema (chave VARCHAR(100) PRIMARY KEY, valor TEXT NOT NULL, atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
-            $resultado[] = 'configuracoes_sistema';
-        }
-
-        $admins = $database->select("SELECT COUNT(*) AS total FROM usuarios WHERE perfil = 'admin'");
-        $totalAdmins = !empty($admins) ? (int)$admins[0]['total'] : 0;
-        if ($totalAdmins === 0) {
-            $existeUsuario1 = $database->select("SELECT 1 FROM usuarios WHERE id = 1");
-            if (!empty($existeUsuario1)) {
-                $database->query("UPDATE usuarios SET perfil = 'admin' WHERE id = 1");
-                $resultado[] = 'admin_inicial_id_1';
+        $versaoOk = true;
+        foreach ($statements as $stmt) {
+            if (empty($stmt)) continue;
+            try {
+                $database->query($stmt);
+            } catch (Exception $e) {
+                if (erroJaExiste($e)) {
+                    $log[] = "[{$versao}] aviso: " . strtok($e->getMessage(), "\n");
+                } else {
+                    $erros[] = "[{$versao}] ERRO: " . $e->getMessage();
+                    $versaoOk = false;
+                }
             }
         }
 
-        $database->commit();
-        return ['sucesso' => true, 'alteracoes' => $resultado];
-    } catch (Exception $e) {
-        $database->rollback();
-        return ['sucesso' => false, 'erro' => $e->getMessage(), 'alteracoes' => $resultado];
+        if ($versaoOk) {
+            try {
+                $database->query(
+                    "INSERT INTO migrations (versao, arquivo) VALUES (?, ?)",
+                    [$versao, $arquivo]
+                );
+                $log[] = "[{$versao}] aplicada com sucesso";
+            } catch (Exception $e) {
+                $erros[] = "[{$versao}] ERRO ao registrar: " . $e->getMessage();
+            }
+        }
     }
-}
-}
 
-if (!function_exists('preverMigracoes')) {
-function preverMigracoes() {
-    global $database;
-    $resp = [];
-    try {
-        $colPerfil = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'perfil'");
-        $resp[] = ['nome' => 'usuarios.perfil', 'status' => empty($colPerfil) ? 'pendente' : 'ok'];
-
-        $colStripePrice = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'planos' AND column_name = 'stripe_price_id'");
-        $resp[] = ['nome' => 'planos.stripe_price_id', 'status' => empty($colStripePrice) ? 'pendente' : 'ok'];
-
-        $colStripeProduct = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'planos' AND column_name = 'stripe_product_id'");
-        $resp[] = ['nome' => 'planos.stripe_product_id', 'status' => empty($colStripeProduct) ? 'pendente' : 'ok'];
-
-        $colCustomerId = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'assinaturas' AND column_name = 'customer_id'");
-        $resp[] = ['nome' => 'assinaturas.customer_id', 'status' => empty($colCustomerId) ? 'pendente' : 'ok'];
-
-        $tblConfigSistema = $database->select("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'configuracoes_sistema'");
-        $resp[] = ['nome' => 'tabela.configuracoes_sistema', 'status' => empty($tblConfigSistema) ? 'pendente' : 'ok'];
-
-        $admins = $database->select("SELECT COUNT(*) AS total FROM usuarios WHERE perfil = 'admin'");
-        $totalAdmins = !empty($admins) ? (int)$admins[0]['total'] : 0;
-        $resp[] = ['nome' => 'admin.existente', 'status' => $totalAdmins > 0 ? 'ok' : 'pendente'];
-        return ['sucesso' => true, 'itens' => $resp];
-    } catch (Exception $e) {
-        return ['sucesso' => false, 'erro' => $e->getMessage()];
-    }
-}
+    return [
+        'sucesso' => empty($erros),
+        'log'     => $log,
+        'erros'   => $erros,
+    ];
 }
 
+// ── API ──────────────────────────────────────────────────────────────────────
 if (isset($_GET['api']) && $_GET['api'] === 'admin_migracoes') {
     header('Content-Type: application/json');
+
+    if (!usuarioLogado() || ($_SESSION['perfil'] ?? '') !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['sucesso' => false, 'erro' => 'Acesso negado']);
+        exit;
+    }
+
     $acao = $_GET['acao'] ?? '';
+
+    if ($acao === 'listar') {
+        echo json_encode(['sucesso' => true, 'migracoes' => listarMigrations()]);
+        exit;
+    }
+
     if ($acao === 'aplicar') {
-        echo json_encode(aplicarMigracoes());
+        echo json_encode(aplicarMigrations());
         exit;
     }
-    if ($acao === 'prever') {
-        echo json_encode(preverMigracoes());
-        exit;
-    }
+
     echo json_encode(['sucesso' => false, 'erro' => 'acao_invalida']);
     exit;
 }
-
-?>
-        // Usuarios: garantir telefone, cpf e atualizado_em
-        $colTel = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'telefone'");
-        if (empty($colTel)) {
-            $database->query("ALTER TABLE usuarios ADD COLUMN telefone VARCHAR(20) NULL AFTER email");
-            $resultado[] = 'usuarios.telefone';
-        }
-        $colCpf = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'cpf'");
-        if (empty($colCpf)) {
-            $database->query("ALTER TABLE usuarios ADD COLUMN cpf VARCHAR(14) NULL AFTER telefone");
-            $resultado[] = 'usuarios.cpf';
-        }
-        $colAtualizadoEm = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'atualizado_em'");
-        if (empty($colAtualizadoEm)) {
-            $database->query("ALTER TABLE usuarios ADD COLUMN atualizado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER cpf");
-            $resultado[] = 'usuarios.atualizado_em';
-        }
-        $colTel = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'telefone'");
-        $resp[] = ['nome' => 'usuarios.telefone', 'status' => empty($colTel) ? 'pendente' : 'ok'];
-        $colCpf = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'cpf'");
-        $resp[] = ['nome' => 'usuarios.cpf', 'status' => empty($colCpf) ? 'pendente' : 'ok'];
-        $colAtualizadoEm = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'atualizado_em'");
-        $resp[] = ['nome' => 'usuarios.atualizado_em', 'status' => empty($colAtualizadoEm) ? 'pendente' : 'ok'];
