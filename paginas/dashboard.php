@@ -157,7 +157,7 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
                 <!-- CARD DE DESPESA -->
                 <div
                     class="glass-panel p-6 rounded-2xl relative overflow-hidden group col-span-2 col-start-3 md:col-span-1">
-                    <p class="text-xs text-zinc-500 mb-1">Vazamento</p>
+                    <p class="text-xs text-zinc-500 mb-1">Despesas</p>
                     <p class="text-large md:text-xl font-medium text-red-800 tracking-tight" id="valor-despesas">
                         <?php echo $simbolo_moeda . ' ' . number_format($resumo['total_despesas'], 2, ',', '.'); ?>
                     </p>
