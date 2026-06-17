@@ -263,27 +263,6 @@ if (substr($base_app, -1) !== '/') { $base_app .= '/'; }
 
 </div>
 <?php if (!$esta_no_index) echo '</div>'; ?>
-<?php if (!$esta_no_index): ?>
-    <?php if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') { ?>
-        <nav class="menu-inferior">
-            <a href="<?php echo $base_app; ?>index.php?pagina=dashboard" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
-            <a href="<?php echo $base_app; ?>index.php?pagina=transacoes" class="menu-item"><i class="fas fa-exchange-alt"></i><span>Transações</span></a>
-            <div class="espaco-central"></div>
-            <a href="<?php echo $base_app; ?>index.php?pagina=categorias" class="menu-item"><i class="fas fa-tags"></i><span>Categorias</span></a>
-            <a href="<?php echo $base_app; ?>index.php?pagina=perfil" class="menu-item"><i class="fas fa-user"></i><span>Perfil</span></a>
-        </nav>
-        <div class="menu-overlay" id="menu-overlay"></div>
-        <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()"><i class="fas fa-plus"></i></a>
-        <div class="menu-circular" id="menu-circular">
-            <a href="#" class="opcao-menu receita" onclick="abrirModalTransacao('receita')"><i class="fas fa-arrow-up"></i><span>Receita</span></a>
-            <a href="#" class="opcao-menu despesa" onclick="abrirModalTransacao('despesa')"><i class="fas fa-arrow-down"></i><span>Despesa</span></a>
-            <a href="#" class="opcao-menu categoria" onclick="abrirModalCategoria()"><i class="fas fa-tags"></i><span>Categoria</span></a>
-        </div>
-        <script>
-        function toggleMenuCircular(){var m=document.getElementById('menu-circular');var o=document.getElementById('menu-overlay');if(!m||!o)return;m.classList.toggle('ativo');o.classList.toggle('ativo');}
-        </script>
-    <?php } ?>
-<?php endif; ?>
 <script>
 function obterUrl(caminho) {
     var caminhoNormalizado = (caminho || '').replace(/^\//, '');
@@ -317,6 +296,22 @@ function assinar(planoId) {
             alert('Erro ao iniciar checkout. Verifique o gateway.');
             console.error(e);
         });
+}
+function assinarGratuito(planoId){
+    fetch(obterUrl('funcoes/admin_assinaturas.php?api=admin_assinaturas&acao=criar_gratuita'), {
+        method: 'POST',
+        body: new URLSearchParams({ plano_id: String(planoId) })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d && d.sucesso) {
+            alert('Assinatura gratuita ativada');
+            window.location.reload();
+        } else {
+            alert('Não foi possível ativar: ' + (d.erro || 'erro'));
+        }
+    })
+    .catch(function(){ alert('Erro de rede ao ativar assinatura gratuita'); });
 }
 </script>
 <?php if (!$esta_no_index): ?>

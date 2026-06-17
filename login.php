@@ -365,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'cadastr
                     <div class="hero-logo"><i class="fas fa-tree"></i></div>
                     <div class="hero-title">
                         <span class="peak">PEAK</span>
-                        <span class="sub">Gestão Financeira</span>
+                        <span class="sub">Otimização Financeira</span>
                     </div>
                 </div>
                 <div class="hero-desc">Controle suas finanças com clareza e precisão.</div>
@@ -377,7 +377,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'cadastr
                 <div class="brand-logo"><i class="fas fa-tree"></i></div>
                 <div class="brand-text">
                     <span class="brand-title">PEAK</span>
-                    <span class="brand-sub">Gestão Financeira</span>
+                    <span class="brand-sub">Otimização Financeira</span>
                 </div>
             </div>
             <p style="text-align:center; color: var(--cor-texto-secundario); margin:0 0 12px 0;">Faça login para acessar sua conta</p>

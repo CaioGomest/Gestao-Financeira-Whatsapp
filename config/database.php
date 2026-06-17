@@ -88,11 +88,19 @@ class Database {
     }
 
     public function commit() {
-        return $this->conectar()->commit();
+        $pdo = $this->conectar();
+        if ($pdo->inTransaction()) {
+            return $pdo->commit();
+        }
+        return false;
     }
 
     public function rollback() {
-        return $this->conectar()->rollback();
+        $pdo = $this->conectar();
+        if ($pdo->inTransaction()) {
+            return $pdo->rollBack();
+        }
+        return false;
     }
 
     public function query($sql, $params = []) {

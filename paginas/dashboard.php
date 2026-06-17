@@ -27,7 +27,6 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wealth OS - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -95,16 +94,22 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
 
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-medium tracking-tight text-white">Dashboard</h1>
-                    <p class="text-sm text-zinc-500 mt-1" id="descricao-periodo">Visão geral das suas finanças</p>
+                    <h1 class="text-3xl md:text-4xl font-medium tracking-tight text-white">Dashboard </h1>
+                    <p class="text-sm text-zinc-500 mt-1 underline" id="descricao-periodo"></p>
                 </div>
 
                 <div class="relative" id="seletor-bonito-periodo" style="overflow: visible;">
-                    <button id="btn-seletor-periodo"
-                        class="px-4 py-2 text-xs font-medium rounded-full flex items-center gap-2 transition-colors">
-                        <span id="texto-seletor-periodo">Mês Atual</span>
-                        <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
-                    </button>
+                    <div class="flex items-center justify-between w-full">
+                        <button id="btn-seletor-periodo"
+                            class="px-4 py-2 text-xs font-medium rounded-full flex items-center gap-2">
+                            <span id="texto-seletor-periodo">Mês Atual</span>
+                            <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+                        </button>
+
+
+                    </div>
+
+
                     <div class="seletor-painel" id="painel-seletor-periodo" style="display: none;">
                         <div class="painel-topo">
                             <button class="painel-nav" id="painel-prev"><i class="fas fa-chevron-left"></i></button>
@@ -127,37 +132,35 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div class="grid grid-cols-4 gap-4 md:grid-cols-3">
+                <!-- CARD DE SALDO TOTAL  -->
+                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group col-span-4 md:col-span-1">
                     <div
                         class="absolute -right-6 -top-6 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-500">
                     </div>
+
                     <div class="relative z-10">
-                        <p class="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">Saldo Total</p>
+                        <p class="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-1">Saldo</p>
                         <h2 class="text-3xl font-medium tracking-tight gold-gradient-text" id="valor-saldo">
                             <?php echo $simbolo_moeda . ' ' . number_format($resumo['saldo_atual'], 2, ',', '.'); ?>
                         </h2>
-                        <h2 class="text-3xl font-medium tracking-tight text-white" id="valor-oculto"
-                            style="display: none;">••••••</h2>
                     </div>
                 </div>
 
-                <div class="glass-panel p-6 rounded-2xl border-l-2 border-l-emerald-500/50">
-                    <p class="text-xs text-zinc-500 mb-1">Receitas</p>
-                    <p class="text-xl font-medium text-white tracking-tight" id="valor-receitas">
+                <!-- CARD DE RECEITA -->
+                <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group col-span-2 md:col-span-1">
+                    <p class="text-xs text-zinc-500 mb-1">Receita</p>
+                    <p class="text-large md:text-xl font-medium text-white tracking-tight" id="valor-receitas">
                         <?php echo $simbolo_moeda . ' ' . number_format($resumo['total_receitas'], 2, ',', '.'); ?>
                     </p>
-                    <p class="text-xl font-medium text-white tracking-tight" id="receitas-oculto"
-                        style="display: none;">••••••</p>
                 </div>
-
-                <div class="glass-panel p-6 rounded-2xl border-l-2 border-l-red-500/50">
-                    <p class="text-xs text-zinc-500 mb-1">Despesas</p>
-                    <p class="text-xl font-medium text-white tracking-tight" id="valor-despesas">
+                <!-- CARD DE DESPESA -->
+                <div
+                    class="glass-panel p-6 rounded-2xl relative overflow-hidden group col-span-2 col-start-3 md:col-span-1">
+                    <p class="text-xs text-zinc-500 mb-1">Vazamento</p>
+                    <p class="text-large md:text-xl font-medium text-red-800 tracking-tight" id="valor-despesas">
                         <?php echo $simbolo_moeda . ' ' . number_format($resumo['total_despesas'], 2, ',', '.'); ?>
                     </p>
-                    <p class="text-xl font-medium text-white tracking-tight" id="despesas-oculto"
-                        style="display: none;">••••••</p>
                 </div>
             </div>
 
@@ -165,6 +168,17 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
                 <div class="glass-panel p-6 rounded-2xl lg:col-span-2">
                     <h3 class="text-sm font-medium text-white mb-6">Entradas e Saídas</h3>
                     <div class="h-64"><canvas id="grafico-linhas"></canvas></div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="text-sm font-medium text-white mb-6 flex items-center gap-2">
+                        <iconify-icon icon="solar:pie-chart-2-linear" class="text-amber-500"></iconify-icon>
+                        Categorias de Despesas
+                    </h3>
+                    <div class="h-64 relative w-full flex justify-center items-center">
+                        <canvas id="grafico-donut-despesas"></canvas>
+                    </div>
+                    <div id="lista-categorias-despesas" class="mt-4 space-y-1"></div>
                 </div>
                 <div class="glass-panel p-6 rounded-2xl">
                     <h3 class="text-sm font-medium text-white mb-6 flex items-center gap-2">
@@ -176,16 +190,7 @@ $url_avatar = $foto_usuario ? $foto_usuario : 'https://ui-avatars.com/api/?name=
                     </div>
                     <div id="lista-categorias-receitas" class="mt-4 space-y-1"></div>
                 </div>
-                <div class="glass-panel p-6 rounded-2xl">
-                    <h3 class="text-sm font-medium text-white mb-6 flex items-center gap-2">
-                        <iconify-icon icon="solar:pie-chart-2-linear" class="text-amber-500"></iconify-icon>
-                        Categorias de Despesas
-                    </h3>
-                    <div class="h-64 relative w-full flex justify-center items-center">
-                        <canvas id="grafico-donut-despesas"></canvas>
-                    </div>
-                    <div id="lista-categorias-despesas" class="mt-4 space-y-1"></div>
-                </div>
+
             </div>
 
             <!-- Lista de Transações -->

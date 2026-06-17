@@ -255,6 +255,7 @@ CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
+  `perfil` enum('usuario','admin') DEFAULT 'usuario',
   `senha_hash` varchar(255) NOT NULL,
   `foto_perfil` varchar(255) DEFAULT NULL,
   `plano_id` int(11) DEFAULT 1,
@@ -270,8 +271,8 @@ CREATE TABLE `usuarios` (
 -- Despejando dados para a tabela `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `nome`, `email`, `senha_hash`, `foto_perfil`, `plano_id`, `status`, `email_verificado`, `data_cadastro`, `ultimo_acesso`, `criado_em`, `atualizado_em`) VALUES
-(1, 'usuario', 'caio@gmail.com', '$2a$12$Owi9SFg883JfNvjc42Qq3.F9REB8oS78QdDTrSIjXoejAjN0ov4Ka', '', 1, 'ativo', 0, '2025-10-29 17:57:17', '2025-11-28 13:31:07', '2024-01-01 00:00:00', '2025-11-28 13:31:07');
+INSERT INTO `usuarios` (`id`, `nome`, `email`, `perfil`, `senha_hash`, `foto_perfil`, `plano_id`, `status`, `email_verificado`, `data_cadastro`, `ultimo_acesso`, `criado_em`, `atualizado_em`) VALUES
+(1, 'usuario', 'caio@gmail.com', 'admin', '$2a$12$Owi9SFg883JfNvjc42Qq3.F9REB8oS78QdDTrSIjXoejAjN0ov4Ka', '', 1, 'ativo', 0, '2025-10-29 17:57:17', '2025-11-28 13:31:07', '2024-01-01 00:00:00', '2025-11-28 13:31:07');
 
 --
 -- Índices para tabelas despejadas

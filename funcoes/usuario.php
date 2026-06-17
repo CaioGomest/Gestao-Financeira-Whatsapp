@@ -134,7 +134,11 @@ function obterDadosUsuario() {
         $usuarios = $database->select($sql, [$_SESSION['usuario_id']]);
     }
 
-    return !empty($usuarios) ? $usuarios[0] : null;
+    $usuario = !empty($usuarios) ? $usuarios[0] : null;
+    if ($usuario && isset($usuario['perfil'])) {
+        $_SESSION['perfil'] = $usuario['perfil'];
+    }
+    return $usuario;
 }
 }
 
@@ -269,9 +273,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['api']) && $_GET['api'] =
             } else {
                 // Modo desenvolvimento: retornar dados do usuário padrão
                 global $database;
-                $sql = "SELECT id, nome, email, foto_perfil, plano_id, data_cadastro, ultimo_acesso FROM usuarios WHERE id = 1";
-                $usuarios = $database->select($sql);
-                echo json_encode(!empty($usuarios) ? $usuarios[0] : ['id' => 1, 'nome' => 'Usuário Teste', 'email' => 'teste@teste.com']);
+        $temPerfil = false;
+        try {
+            $col = $database->select("SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'usuarios' AND column_name = 'perfil'");
+            $temPerfil = !empty($col);
+        } catch (Exception $e) {
+            $temPerfil = false;
+        }
+        if (!$temPerfil) {
+            try {
+                $database->query("ALTER TABLE usuarios ADD COLUMN perfil ENUM('usuario','admin') DEFAULT 'usuario' AFTER email");
+                $temPerfil = true;
+            } catch (Exception $e) {}
+        }
+        $sql = "SELECT id, nome, email, foto_perfil, plano_id, data_cadastro, ultimo_acesso" . ($temPerfil ? ", perfil" : "") . " FROM usuarios WHERE id = 1";
+        $usuarios = $database->select($sql);
+        $usr = !empty($usuarios) ? $usuarios[0] : ['id' => 1, 'nome' => 'Usuário Teste', 'email' => 'teste@teste.com'];
+        if ($temPerfil && isset($usr['perfil'])) $_SESSION['perfil'] = $usr['perfil'];
+        echo json_encode($usr);
             }
             break;
         

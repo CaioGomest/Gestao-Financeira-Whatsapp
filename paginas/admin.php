@@ -584,6 +584,8 @@ function carregarAssinaturas(){
             });
             html += '</tbody></table>';
             document.getElementById('lista-assinaturas').innerHTML = html;
+        }).catch(function(){
+            document.getElementById('lista-assinaturas').innerHTML = '<div class="estado-vazio"><h3>Erro ao carregar assinaturas</h3><p>Tente novamente mais tarde.</p></div>';
         });
 }
 

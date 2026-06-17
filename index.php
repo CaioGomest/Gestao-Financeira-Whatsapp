@@ -20,11 +20,12 @@ if (usuarioLogado()) {
     ];
 }
 
+// Lógica de Roteamento inicial
 $pagina_inicial = isset($_GET['pagina']) ? preg_replace('/[^a-z_]/', '', $_GET['pagina']) : '';
 
 if ($pagina_inicial === '' && isset($_COOKIE['paginaAtual'])) {
     $cookiePagina = preg_replace('/[^a-z_]/', '', $_COOKIE['paginaAtual']);
-    $paginasPermitidas = ['dashboard','transacoes','categorias','perfil','admin'];
+    $paginasPermitidas = ['dashboard', 'transacoes', 'categorias', 'perfil', 'admin'];
     if (in_array($cookiePagina, $paginasPermitidas, true)) {
         if ($cookiePagina === 'admin' && (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin')) {
             $pagina_inicial = 'dashboard';
@@ -46,175 +47,229 @@ if (!file_exists($arquivo_pagina_inicial)) {
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
+    <?php
+    $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+    $uri_sem_query = strtok($uri, '?');
+    $caminho_base = $uri_sem_query;
+    if (substr($caminho_base, -10) === '/index.php') {
+        $caminho_base = substr($caminho_base, 0, -10);
+    }
+    $pos_paginas = strpos($caminho_base, '/paginas/');
+    if ($pos_paginas !== false) {
+        $caminho_base = substr($caminho_base, 0, $pos_paginas);
+    }
+    $pos_modais = strpos($caminho_base, '/modais/');
+    if ($pos_modais !== false) {
+        $caminho_base = substr($caminho_base, 0, $pos_modais);
+    }
+    if (substr($caminho_base, -1) !== '/') {
+        $caminho_base .= '/';
+    }
+    ?>
+    <base href="<?= htmlspecialchars($caminho_base) ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finanças Pessoais</title>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        (function(){
+        // PDF.js loader (mantido original)
+        (function () {
             function loadScript(src, worker) {
-                return new Promise(function(resolve, reject){
+                return new Promise(function (resolve, reject) {
                     var s = document.createElement('script');
                     s.src = src;
-                    s.onload = function(){
+                    s.onload = function () {
                         try {
                             if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
                                 window.pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
                                 resolve(window.pdfjsLib);
                             } else {
-                                reject(new Error('pdfjsLib não disponível após carregar ' + src));
+                                reject(new Error('pdfjsLib não disponível'));
                             }
-                        } catch(e) { reject(e); }
+                        } catch (e) { reject(e); }
                     };
-                    s.onerror = function(){ reject(new Error('Falha ao carregar ' + src)); };
+                    s.onerror = function () { reject(new Error('Falha ao carregar ' + src)); };
                     document.head.appendChild(s);
                 });
             }
             window.__loadPdfJs = {
-                ensure: async function() {
+                ensure: async function () {
                     if (window.pdfjsLib && window.pdfjsLib.getDocument) return window.pdfjsLib;
                     var fontes = [
                         { lib: 'assets/libs/pdfjs/pdf.min.js', worker: 'assets/libs/pdfjs/pdf.worker.min.js' },
-                        // cdnjs versão estável 2.x
-                        { lib: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js', worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js' },
-                        // jsDelivr versões 4.x e 3.x
-                        { lib: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js', worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.js' },
-                        { lib: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.min.js', worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.9.179/build/pdf.worker.min.js' },
-                        // unpkg fallback
-                        { lib: 'https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.min.js', worker: 'https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.js' },
-                        { lib: 'https://unpkg.com/pdfjs-dist@3.9.179/build/pdf.min.js', worker: 'https://unpkg.com/pdfjs-dist@3.9.179/build/pdf.worker.min.js' }
+                        { lib: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js', worker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js' }
                     ];
-                    for (var i=0;i<fontes.length;i++) {
-                        var c = fontes[i];
-                        try { 
-                            console.log('Tentando carregar PDF.js de', c.lib);
-                            var lib = await loadScript(c.lib, c.worker);
-                            if (lib && lib.getDocument) {
-                                console.log('PDF.js carregado de', c.lib);
-                                return lib;
-                            }
-                        } catch(e) {
-                            console.warn('Falha ao carregar PDF.js de', c.lib, e && e.message ? e.message : e);
-                        }
+                    for (var i = 0; i < fontes.length; i++) {
+                        try {
+                            return await loadScript(fontes[i].lib, fontes[i].worker);
+                        } catch (e) { console.warn(e); }
                     }
-                    console.error('PDF.js não pôde ser carregado localmente nem de CDNs');
                     return null;
                 }
             };
         })();
     </script>
 </head>
+
 <body>
     <script>
-    (function() {
-        try {
-            var escuro = localStorage.getItem('temaEscuro');
-            if (escuro === 'true') {
-                document.body.classList.add('tema-escuro');
-            } else {
-                document.body.classList.add('tema-claro');
-            }
-        } catch (e) {
-            document.body.classList.add('tema-escuro');
-        }
-    })();
+        // Aplica tema antes de renderizar (evita flash)
+        (function () {
+            try {
+                var escuro = localStorage.getItem('temaEscuro');
+                var isDark = escuro !== 'false';
+                document.body.classList.add(isDark ? 'tema-escuro' : 'tema-claro');
+            } catch (e) { document.body.classList.add('tema-escuro'); }
+        })();
     </script>
+
     <div id="app">
         <header class="app-header">
             <?php
             $dados_usuario = isset($usuario_atual) ? $usuario_atual : obterDadosUsuario();
-            $nome_header = isset($dados_usuario['nome']) ? $dados_usuario['nome'] : (isset($_SESSION['usuario_nome']) ? $_SESSION['usuario_nome'] : 'Usuário');
-            $foto_header = isset($dados_usuario['foto_perfil']) ? $dados_usuario['foto_perfil'] : '';
-            $url_avatar_header = $foto_header ? $foto_header : ('https://ui-avatars.com/api/?name=' . urlencode($nome_header) . '&background=fbbf24&color=000');
+            $nome_header = $dados_usuario['nome'] ?? 'Usuário';
+            $foto_header = $dados_usuario['foto_perfil'] ?? '';
+            $url_avatar_header = $foto_header ?: ('https://ui-avatars.com/api/?name=' . urlencode($nome_header) . '&background=fbbf24&color=000');
             ?>
             <div class="app-header-left">
-                <div class="app-logo">
-                    <i class="fas fa-tree"></i>
-                </div>
+                <div class="app-logo"><i class="fas fa-tree"></i></div>
                 <div class="app-titles">
                     <span class="app-title">PEAK</span>
-                    <span class="app-subtitle">Gestão Financeira</span>
+                    <span class="app-subtitle">Otimização Financeira</span>
                 </div>
             </div>
             <div class="app-header-right">
-                <button class="botao-ocultar" onclick="app.toggleOcultarValores()">
-                    <i class="fas" id="icone-ocultar"></i>
-                </button>
-                <img src="<?php echo htmlspecialchars($url_avatar_header); ?>" class="app-avatar" alt="Avatar">
+                <div class="flex items-center mr-4">
+                    <button id="btn-tema" onclick="alternarTema()" title="Alternar tema" class="btn-tema-toggle">
+                        <i id="icone-tema" class="fas fa-moon"></i>
+                    </button>
+                </div>
+                <img src="<?= htmlspecialchars($url_avatar_header) ?>" class="app-avatar" alt="Avatar">
             </div>
         </header>
-        <!-- Conteúdo principal -->
+
         <div class="conteudo" id="conteudo-principal">
-            <!-- Conteúdo carregado dinamicamente ou renderizado inicialmente -->
             <?php include $arquivo_pagina_inicial; ?>
         </div>
-        
-        <script>
-        // Variável para controlar a página atual
-        var paginaAtual = '<?php echo $pagina_inicial; ?>';
-        
-        // Função para definir item ativo no menu
+
+        <div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-auto min-w-[20rem] max-w-[95vw] 
+            bg-[#121214]/80 backdrop-blur-xl border border-white/10 p-2 rounded-full 
+            flex items-center justify-center gap-1 shadow-2xl shadow-black/50 z-50 menu-inferior">
+
+            <div class="flex items-center gap-1">
+                <a href="javascript:void(0)" onclick="carregarPagina('dashboard')" data-pagina="dashboard"
+                    class="nav-pill-item w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/10">
+                    <i class="fas fa-home text-lg"></i>
+                </a>
+                <a href="javascript:void(0)" onclick="carregarPagina('transacoes')" data-pagina="transacoes"
+                    class="nav-pill-item w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/10">
+                    <i class="fas fa-exchange-alt text-lg"></i>
+                </a>
+            </div>
+
+            <div class="px-2">
+                <a href="javascript:void(0)" onclick="toggleMenuCircular()"
+                    class="w-14 h-14 bg-amber-500 hover:bg-amber-600 text-black rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 active:scale-95">
+                    <i class="fas fa-plus text-xl"></i>
+                </a>
+            </div>
+
+            <div class="flex items-center gap-1">
+                <a href="javascript:void(0)" onclick="carregarPagina('categorias')" data-pagina="categorias"
+                    class="nav-pill-item w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/10">
+                    <i class="fas fa-tags text-lg"></i>
+                </a>
+                <a href="javascript:void(0)" onclick="carregarPagina('perfil')" data-pagina="perfil"
+                    class="nav-pill-item w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/10">
+                    <i class="fas fa-user text-lg"></i>
+                </a>
+                <?php
+                $perfil_menu_admin = (isset($_SESSION['perfil']) && $_SESSION['perfil'] === 'admin')
+                    || (isset($usuario_atual['perfil']) && $usuario_atual['perfil'] === 'admin');
+                if ($perfil_menu_admin): ?>
+                    <a href="javascript:void(0)" onclick="carregarPagina('admin')" data-pagina="admin"
+                        class="nav-pill-item w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/10">
+                        <i class="fas fa-tools text-lg"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="menu-overlay" id="menu-overlay" onclick="toggleMenuCircular()"></div>
+        <div class="menu-circular" id="menu-circular">
+            <a href="javascript:void(0)" class="opcao-menu receita" onclick="abrirModalTransacao('receita')">
+                <i class="fas fa-arrow-up"></i><span>Receita</span>
+            </a>
+            <a href="javascript:void(0)" class="opcao-menu despesa" onclick="abrirModalTransacao('despesa')">
+                <i class="fas fa-arrow-down"></i><span>Despesa</span>
+            </a>
+            <a href="javascript:void(0)" class="opcao-menu categoria"
+                onclick="toggleMenuCircular(); setTimeout(function(){ if(typeof abrirModalCategoria==='function') abrirModalCategoria(); }, 150)">
+                <i class="fas fa-tag"></i><span>Categoria</span>
+            </a>
+            <a href="javascript:void(0)" class="opcao-menu fechar-menu" onclick="toggleMenuCircular()">
+                <i class="fas fa-times"></i><span>Fechar</span>
+            </a>
+        </div>
+
+        <div id="container-modais">
+            <?php
+            include 'modais/transacao.php';
+            include 'modais/categoria.php';
+            include 'modais/importar_extrato.php';
+            ?>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+
+    <script>
+        var paginaAtual = '<?= $pagina_inicial ?>';
+
         function definirItemAtivo(pagina) {
-            // Remover classe ativa de todos os itens
-            var itensMenu = document.querySelectorAll('.menu-inferior .menu-item');
-            itensMenu.forEach(function(item) {
-                item.classList.remove('ativo');
+            document.querySelectorAll('.nav-pill-item').forEach(function(a) {
+                a.classList.remove('text-amber-500', 'bg-white/10');
+                a.classList.add('text-neutral-500');
             });
-            
-            // Adicionar classe ativa ao item correspondente
-            var itemAtivo = document.querySelector('.menu-inferior .menu-item[onclick*="' + pagina + '"]');
-            if (itemAtivo) {
-                itemAtivo.classList.add('ativo');
+            var link = document.querySelector(`.nav-pill-item[data-pagina="${pagina}"]`);
+            if (link) {
+                link.classList.remove('text-neutral-500');
+                link.classList.add('text-amber-500');
             }
-            
-            // Atualizar variável da página atual
-            paginaAtual = pagina;
         }
-        
-        // Função para carregar páginas via AJAX
-        function carregarPagina(pagina) {
-            console.log('Carregando página:', pagina);
+
+        function carregarPagina(pagina, push = true) {
             var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function() {
+            xhttp.onreadystatechange = function () {
                 if (this.readyState == 4 && this.status == 200) {
-                    console.log('Página carregada com sucesso:', pagina);
-                    // Inserir HTML e executar scripts embutidos
-                    var conteudoPrincipal = document.getElementById('conteudo-principal');
-                    var containerTemporario = document.createElement('div');
-                    containerTemporario.innerHTML = this.responseText;
+                    var conteudo = document.getElementById('conteudo-principal');
+                    var temp = document.createElement('div');
+                    temp.innerHTML = this.responseText;
 
-                    // Extrair scripts do conteúdo carregado
-                    var scriptsEncontrados = containerTemporario.querySelectorAll('script');
-
-                    // Renderizar apenas elementos não-script dentro do conteúdo principal
-                    conteudoPrincipal.innerHTML = '';
-                    containerTemporario.childNodes.forEach(function(no) {
-                        var ehScript = no.tagName && no.tagName.toLowerCase() === 'script';
-                        if (!ehScript) {
-                            conteudoPrincipal.appendChild(no.cloneNode(true));
-                        }
+                    var scripts = temp.querySelectorAll('script');
+                    conteudo.innerHTML = '';
+                    temp.childNodes.forEach(no => {
+                        if (no.tagName !== 'SCRIPT') conteudo.appendChild(no.cloneNode(true));
                     });
 
-                    // Remover scripts de página anteriores para evitar acúmulo
+                    // Remover scripts da página anterior antes de adicionar os novos
                     document.querySelectorAll('script[data-pagina-script]').forEach(function(s) { s.remove(); });
 
-                    // Executar scripts embutidos após inserir o conteúdo
-                    scriptsEncontrados.forEach(function(script) {
+                    // Adicionar scripts da nova página com atributo para limpeza futura
+                    scripts.forEach(function(script) {
                         var novoScript = document.createElement('script');
                         novoScript.setAttribute('data-pagina-script', pagina);
-                        // Manter src quando existir; caso contrário, injetar o conteúdo
                         if (script.src) {
-                            // Garantir caminho absoluto quando necessário
-                            var src = script.src;
                             try {
-                                // Se for relativo, prefixar com '/'
-                                var urlObj = new URL(src, window.location.origin);
+                                var urlObj = new URL(script.src, window.location.origin);
                                 novoScript.src = urlObj.href;
                             } catch (e) {
-                                novoScript.src = src.charAt(0) === '/' ? src : ('/' + src);
+                                novoScript.src = script.src.charAt(0) === '/' ? script.src : ('/' + script.src);
                             }
                         } else {
                             novoScript.textContent = script.innerHTML;
@@ -271,139 +326,53 @@ if (!file_exists($arquivo_pagina_inicial)) {
             xhttp.open("GET", "paginas/" + pagina + ".php", true);
             xhttp.send();
         }
-        
-        // Inicializar aplicação
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar ícone de ocultar
-            var iconeOcultar = document.getElementById('icone-ocultar');
-            if (iconeOcultar) {
-                iconeOcultar.classList.add('fa-eye-slash');
-            }
-            
-            // Definir item ativo com base na página inicial
-            try {
-                var salva = localStorage.getItem('paginaAtual');
-                if (salva && salva !== paginaAtual) {
-                    carregarPagina(salva);
-                } else {
-                    definirItemAtivo(paginaAtual);
-                }
-            } catch(e) { definirItemAtivo(paginaAtual); }
+
+        // Evento para quando o usuário usa as setas do navegador
+        window.onpopstate = function (e) {
+            if (e.state && e.state.pagina) carregarPagina(e.state.pagina, false);
+        };
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function () {
+            definirItemAtivo(paginaAtual);
+            // Salva o estado inicial na History API para o F5 funcionar
+            if (!history.state) history.replaceState({ pagina: paginaAtual }, "", window.location.search);
+            var conteudo = document.getElementById('conteudo-principal');
+            if (conteudo) conteudo.classList.remove('sem-padding');
         });
         
         // A funcionalidade do app agora está em assets/js/app.js
         </script>
         
-        <?php if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') { ?>
-            <!-- Menu de navegação inferior -->
-            <nav class="menu-inferior">
-                <a href="#" class="menu-item" onclick="carregarPagina('dashboard')">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" class="menu-item" onclick="carregarPagina('transacoes')">
-                    <i class="fas fa-exchange-alt"></i>
-                    <span>Transações</span>
-                </a>
-                <div class="espaco-central"></div>
-                <a href="#" class="menu-item" onclick="carregarPagina('categorias')">
-                    <i class="fas fa-tags"></i>
-                    <span>Categorias</span>
-                </a>
-                <a href="#" class="menu-item" onclick="carregarPagina('perfil')">
-                    <i class="fas fa-user"></i>
-                    <span>Perfil</span>
-                </a>
-            </nav>
-
-            <!-- Overlay escuro para o menu -->
-            <div class="menu-overlay" id="menu-overlay"></div>
-
-            <!-- Botão central flutuante -->
-            <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()">
-                <i class="fas fa-plus"></i>
-            </a>
-
-            <!-- Menu circular -->
-            <div class="menu-circular" id="menu-circular">
-                <a href="#" class="opcao-menu receita" data-tipo="receita" onclick="abrirModalTransacao('receita')">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>Receita</span>
-                </a>
-                <a href="#" class="opcao-menu despesa" data-tipo="despesa" onclick="abrirModalTransacao('despesa')">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>Despesa</span>
-                </a>
-                <a href="#" class="opcao-menu categoria" onclick="abrirModalCategoria()">
-                    <i class="fas fa-tags"></i>
-                    <span>Categoria</span>
-                </a>
-            </div>
-        <?php } ?>
         
         <script>
         // Função para alternar o menu circular
         function toggleMenuCircular() {
-            var menu = document.getElementById('menu-circular');
-            var overlay = document.getElementById('menu-overlay');
-            
-            menu.classList.toggle('ativo');
-            overlay.classList.toggle('ativo');
+            document.getElementById('menu-circular').classList.toggle('ativo');
+            document.getElementById('menu-overlay').classList.toggle('ativo');
         }
-        
-        function abrirModalTransacao(tipo) {
-            var mc = document.getElementById('menu-circular');
-            var ov = document.getElementById('menu-overlay');
-            if (mc) mc.classList.remove('ativo');
-            if (ov) ov.classList.remove('ativo');
 
-            var modal = document.getElementById('modalTransacao');
-            var campoTipo = document.getElementById('transacao-tipo');
-            if (modal && campoTipo) {
-                campoTipo.value = tipo;
-                var campoDestino = document.getElementById('campo-conta-destino');
-                if (campoDestino) {
-                    campoDestino.style.display = (tipo === 'transferencia') ? 'block' : 'none';
-                }
-                if (typeof carregarCategoriasParaTransacao === 'function') carregarCategoriasParaTransacao();
-                if (typeof carregarContasParaTransacao === 'function') carregarContasParaTransacao();
-                modal.classList.add('ativo');
-                return;
-            }
-
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function() {
-                if (this.readyState == 4 && this.status == 200) {
-                    var modalContainer = document.getElementById('modal-container');
-                    if (!modalContainer) {
-                        modalContainer = document.createElement('div');
-                        modalContainer.id = 'modal-container';
-                        document.body.appendChild(modalContainer);
-                    }
-                    modalContainer.innerHTML = this.responseText;
-                    var campoTipo2 = document.getElementById('transacao-tipo');
-                    if (campoTipo2) campoTipo2.value = tipo;
-                    var modal2 = document.getElementById('modalTransacao');
-                    if (modal2) modal2.classList.add('ativo');
-                }
-            };
-            xhttp.open("GET", "modais/transacao.php", true);
-            xhttp.send();
+        function aplicarTema(isDark) {
+            document.body.classList.toggle('tema-escuro', isDark);
+            document.body.classList.toggle('tema-claro', !isDark);
+            var icone = document.getElementById('icone-tema');
+            var label = document.getElementById('label-tema');
+            if (icone) icone.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+            if (label) label.textContent = isDark ? 'Escuro' : 'Claro';
         }
-        </script>
-        
-        <!-- Modais -->
-        <div id="container-modais">
-            <?php 
-            include 'modais/transacao.php';
-            include 'modais/categoria.php';
-            include 'modais/importar_extrato.php';
-            ?>
-        </div>
-    </div>
-    
-    <!-- Importação de scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-    <script src="assets/js/app.js"></script>
+
+        function alternarTema() {
+            var isDark = !document.body.classList.contains('tema-escuro');
+            localStorage.setItem('temaEscuro', isDark);
+            aplicarTema(isDark);
+        }
+
+        // Sincroniza ícone com tema atual ao carregar
+        (function() {
+            var isDark = localStorage.getItem('temaEscuro') !== 'false';
+            aplicarTema(isDark);
+        })();
+    </script>
 </body>
+
 </html>

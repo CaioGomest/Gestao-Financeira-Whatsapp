@@ -37,105 +37,21 @@ function adicionarParametroTipo($base, $tipo) {
     return $base . (strpos($base, '?') !== false ? '&' : '?') . 'tipo=' . $tipo;
 }
 ?>
-<?php if (!$esta_no_index): ?>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="<?php echo $base_app; ?>assets/css/style.css">
-</head>
-<body>
-    <script>
-    (function() {
-        try {
-            var escuro = localStorage.getItem('temaEscuro');
-            if (escuro === 'true') {
-                document.body.classList.add('tema-escuro');
-            } else {
-                document.body.classList.add('tema-claro');
-            }
-        } catch (e) {
-            document.body.classList.add('tema-escuro');
-        }
-    })();
-    </script>
-    <?php if (!isset($_SESSION['perfil']) || $_SESSION['perfil'] !== 'admin') { ?>
-        <nav class="menu-inferior">
-            <a href="<?php echo $base_app; ?>index.php?pagina=dashboard" class="menu-item">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="<?php echo $base_app; ?>index.php?pagina=transacoes" class="menu-item">
-                <i class="fas fa-exchange-alt"></i>
-                <span>Transações</span>
-            </a>
-            <div class="espaco-central"></div>
-            <a href="<?php echo $base_app; ?>index.php?pagina=categorias" class="menu-item">
-                <i class="fas fa-tags"></i>
-                <span>Categorias</span>
-            </a>
-            <a href="<?php echo $base_app; ?>index.php?pagina=perfil" class="menu-item">
-                <i class="fas fa-user"></i>
-                <span>Perfil</span>
-            </a>
-        </nav>
-
-        <div class="menu-overlay" id="menu-overlay"></div>
-        <a href="#" class="botao-adicionar-central" onclick="toggleMenuCircular()">
-            <i class="fas fa-plus"></i>
-        </a>
-        <div class="menu-circular" id="menu-circular">
-            <a href="#" class="opcao-menu receita" onclick="abrirModalTransacao('receita')" title="Nova Receita">
-                <i class="fas fa-arrow-up"></i>
-                <span>Receita</span>
-            </a>
-            <a href="#" class="opcao-menu despesa" onclick="abrirModalTransacao('despesa')" title="Nova Despesa">
-                <i class="fas fa-arrow-down"></i>
-                <span>Despesa</span>
-            </a>
-            <a href="#" class="opcao-menu categoria" onclick="abrirModalCategoria()" title="Nova Categoria">
-                <i class="fas fa-tags"></i>
-                <span>Categoria</span>
-            </a>
-        </div>
-    <?php } ?>
-    <script>
-        function toggleMenuCircular() {
-            var menu = document.getElementById('menu-circular');
-            var overlay = document.getElementById('menu-overlay');
-            if (!menu || !overlay) return;
-            menu.classList.toggle('ativo');
-            overlay.classList.toggle('ativo');
-        }
-        (function(){
-            var overlay = document.getElementById('menu-overlay');
-            if (overlay) {
-                overlay.addEventListener('click', function(){
-                    document.getElementById('menu-circular').classList.remove('ativo');
-                    overlay.classList.remove('ativo');
-                });
-            }
-        })();
-    </script>
-<?php endif; ?>
 <div class="pagina-categorias">
-    <div class="categorias-header">
-        <div class="categorias-background"></div>
-        <div class="header-content">
-            <div class="header-info">
-                <h1>
-                    <i class="fas fa-tags"></i>
-                    Categorias
-                </h1>
-                <p>Organize suas transações por categorias</p>
-            </div>
-            <div class="header-actions">
-                <button class="btn-nova-categoria" onclick="abrirModalCategoria()">
-                    <i class="fas fa-plus"></i>
-                    <span>Nova Categoria</span>
-                </button>
-            </div>
+    <div class="flex items-end justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-medium tracking-tight" style="color: var(--cor-texto);">Categorias</h1>
+            <p class="text-sm mt-2" style="color: var(--cor-texto-secundario);">Organize suas transações por categorias</p>
         </div>
+        <button onclick="abrirModalCategoria()" style="
+            display:inline-flex;align-items:center;gap:6px;
+            background:var(--cor-destaque);color:#000;
+            border:none;border-radius:999px;
+            padding:8px 16px;font-size:13px;font-weight:600;
+            cursor:pointer;transition:opacity 0.2s;
+        " onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            <i class="fas fa-plus"></i> Nova
+        </button>
     </div>
 
     <div class="categorias-filtros">
@@ -169,10 +85,10 @@ function adicionarParametroTipo($base, $tipo) {
                     <div class="circulo circulo-3"></div>
                 </div>
             </div>
-            <div class="vazio-content">
+            <div class="vazio-content flex justify-center flex-col">
                 <h3>Nenhuma categoria encontrada</h3>
                 <p>Crie sua primeira categoria para organizar melhor suas transações financeiras</p>
-                <button class="btn-criar-primeira" onclick="abrirModalCategoria()">
+                <button class="btn-criar-primeira flex justify-center" onclick="abrirModalCategoria()">
                     <i class="fas fa-plus"></i>
                     Criar Primeira Categoria
                 </button>
@@ -326,5 +242,4 @@ if (!$esta_no_index) {
 }
 ?>
 <?php if (!$esta_no_index): ?>
-</body>
 <?php endif; ?>

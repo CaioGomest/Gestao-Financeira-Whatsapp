@@ -1,8 +1,5 @@
-/* Estilos para o Sistema de Gerenciamento de Finanças Pessoais */
-
-/* Variáveis de cores */
+﻿
 :root {
-    /* Tema escuro (padrão) */
     --cor-fundo: #121212;
     --cor-fundo-secundario: #1e1e1e;
     --cor-texto: #ffffff;
@@ -15,6 +12,15 @@
     --cor-transferencia: #fbbf24;
     --sombra-padrao: 0 4px 6px rgba(0, 0, 0, 0.3);
     --espaco-lateral-conteudo: 16px;
+    --largura-maxima-conteudo: 1200px;
+
+    /* Aliases para compatibilidade interna */
+    --cor-primaria: var(--cor-destaque);
+    --cor-secundaria: #e6a800;
+    --cor-texto-primario: var(--cor-texto);
+    --cor-texto-principal: var(--cor-texto);
+    --cor-fundo-card: var(--cor-fundo-secundario);
+    --cor-fundo-terciario: var(--cor-borda);
 }
 
 body.tema-claro {
@@ -31,7 +37,6 @@ body.tema-claro {
     --sombra-padrao: 0 4px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Reset e estilos gerais */
 * {
     margin: 0;
     padding: 0;
@@ -53,7 +58,6 @@ body {
     min-height: 100vh;
 }
 
-/* Header global */
 .app-header {
     display: flex;
     align-items: center;
@@ -103,31 +107,41 @@ body.tema-claro .app-header {
     align-items: center;
     gap: 10px;
 }
-.botao-ocultar {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #fff;
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
+.btn-tema-toggle {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    border-radius: 999px;
+    padding: 5px 14px;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    color: #fff;
+    font-size: 13px;
+    transition: background 0.2s;
 }
-.botao-ocultar:hover {
-    background: rgba(255, 255, 255, 0.16);
-    transform: translateY(-1px);
+.btn-tema-toggle:hover {
+    background: rgba(255, 255, 255, 0.18);
 }
-body.tema-claro .botao-ocultar {
-    background: rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0,0,0,0.08);
+body.tema-claro .btn-tema-toggle {
+    background: rgba(0, 0, 0, 0.07);
+    border: 1px solid rgba(0, 0, 0, 0.15);
     color: #1F2937;
 }
-body.tema-claro .botao-ocultar:hover {
-    background: rgba(0, 0, 0, 0.12);
+body.tema-claro .btn-tema-toggle:hover {
+    background: rgba(0, 0, 0, 0.13);
 }
+
+.nav-pill-item {
+    color: rgba(255,255,255,0.45);
+}
+.nav-pill-item.text-amber-500 {
+    color: #f59e0b !important;
+}
+body.tema-claro .nav-pill-item {
+    color: rgba(0,0,0,0.45);
+}
+
 .app-avatar {
     width: 36px;
     height: 36px;
@@ -140,12 +154,6 @@ body.tema-claro .app-avatar {
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-#app {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
 .conteudo {
     flex: 1;
     padding: 16px var(--espaco-lateral-conteudo) 80px;
@@ -153,23 +161,23 @@ body.tema-claro .app-avatar {
     overflow-x: hidden;
 }
 
-/* Manter headers roxos em largura total, compensando o padding do conteúdo */
-.conteudo .dashboard-header,
-.conteudo .transacoes-header,
-.conteudo .perfil-header,
-.conteudo .categorias-header {
-    margin-left: calc(-1 * var(--espaco-lateral-conteudo));
-    margin-right: calc(-1 * var(--espaco-lateral-conteudo));
+.container {
+    max-width: var(--largura-maxima-conteudo);
+    margin: 0 auto;
 }
 
-/* Conteúdo com padding interno */
+.admin-container .dashboard-header {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    left: auto;
+}
 .conteudo-interno {
     padding: 0 20px;
 }
 
 /* Ocultar headers locais das páginas quando houver header global */
 .pagina-transacoes .transacoes-header { display: none; }
-
 
 .dashboard-header #btn-seletor-periodo {
     background: rgba(255, 255, 255, 0.2);
@@ -183,7 +191,7 @@ body.tema-claro .app-avatar {
     gap: 0.5rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .dashboard-header #btn-seletor-periodo:hover {
     background: rgba(255, 255, 255, 0.3);
@@ -199,7 +207,6 @@ body.tema-claro .dashboard-header #btn-seletor-periodo:hover {
     background: #f9fafb;
 }
 
-/* Painéis de vidro */
 .glass-panel {
     background: rgba(24, 24, 27, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -214,7 +221,6 @@ body.tema-claro .glass-panel * {
     color: var(--cor-texto);
 }
 
-/* Modo claro para perfil */
 body.tema-claro .perfil-resumo {
     background: #fff;
     border: 1px solid rgba(0,0,0,0.06);
@@ -233,7 +239,6 @@ body.tema-claro .perfil-item-title { color: #1F2937; }
 body.tema-claro .perfil-item-desc,
 body.tema-claro .perfil-item-arrow { color: #6B7280; }
 
-/* Correções amplas de legibilidade no modo claro */
 body.tema-claro .app-title { color: var(--cor-texto); }
 body.tema-claro .text-white { color: var(--cor-texto) !important; }
 body.tema-claro .text-zinc-50,
@@ -247,7 +252,6 @@ body.tema-claro h2,
 body.tema-claro h3 { color: var(--cor-texto); }
 body.tema-claro p { color: var(--cor-texto-secundario); }
 
-/* Cabeçalho da página */
 .cabecalho-pagina {
     display: flex;
     justify-content: space-between;
@@ -261,7 +265,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     font-weight: 600;
 }
 
-/* Cards e containers */
 .card {
     background-color: var(--cor-fundo-secundario);
     border-radius: 12px;
@@ -270,7 +273,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     box-shadow: var(--sombra-padrao);
 }
 
-/* Card de resumo completo */
 .card-resumo-completo {
     background: var(--cor-fundo-card);
     border-radius: 16px;
@@ -279,7 +281,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     box-shadow: var(--sombra-padrao);
 }
 
-/* Responsividade geral para mobile */
 @media (max-width: 600px) {
     :root {
         --espaco-lateral-conteudo: 16px;
@@ -298,7 +299,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     }
 }
 
-/* Saldo principal */
 .saldo-principal {
     text-align: center;
     position: relative;
@@ -320,7 +320,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     margin-bottom: 8px;
 }
 
-/* Entradas e Saídas */
 .entradas-saidas {
     display: flex;
     gap: 140px;
@@ -384,7 +383,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     color: var(--cor-despesa);
 }
 
-/* Valores gerais */
 .valor-medio {
     font-size: 1.8rem;
     font-weight: 600;
@@ -400,7 +398,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     margin-bottom: 10px;
 }
 
-/* Cores para valores */
 .valor-receita {
     color: var(--cor-receita);
 }
@@ -409,7 +406,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     color: var(--cor-despesa);
 }
 
-/* Gráficos */
 .container-grafico {
     height: 300px;
     margin: 20px 0;
@@ -439,7 +435,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     }
 }
 
-/* Layout específico para donuts e categorias */
 .card-donuts-categorias {
     padding: 1.5rem;
 }
@@ -464,7 +459,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     height: 100% !important;
 }
 
-/* Grid para dois donuts lado a lado */
 .grid-graficos-duplos {
     display: grid;
     grid-template-columns: repeat(2, minmax(240px, 1fr));
@@ -565,7 +559,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     transition: transform 0.3s ease;
 }
 
-/* Responsividade para o layout de donuts */
 @media (max-width: 768px) {
     .conteudo-donuts-categorias {
         gap: 1.5rem;
@@ -581,23 +574,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     }
 }
 
-/* Menu inferior */
-.menu-inferior {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: var(--cor-fundo-secundario);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 10px 0;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-}
-
-/* Estilos do menu inferior movidos para .menu-item */
-
 .espaco-central {
     width: 20%;
     display: flex;
@@ -605,7 +581,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     align-items: center;
 }
 
-/* Botão adicionar (central) */
 .botao-adicionar {
     width: 60px;
     height: 60px;
@@ -662,7 +637,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     transform: translateX(-50%) rotate(45deg) scale(1.1);
 }
 
-/* Overlay escuro para o menu circular */
 .menu-overlay {
     position: fixed;
     top: 0;
@@ -694,7 +668,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     overflow: hidden;
 }
 
-/* Menu circular */
 .menu-circular {
     position: fixed;
     bottom: 20px;
@@ -732,7 +705,6 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     transform: scale(1);
 }
 
-/* Posicionamento circular das opções */
 .opcao-menu:nth-child(1) { /* Receita - Superior centro */
     top: -40px;
     left: calc(50% - 30px);
@@ -745,9 +717,15 @@ body.tema-claro p { color: var(--cor-texto-secundario); }
     transition-delay: 0s;
 }
 
-.opcao-menu:nth-child(3) { /* Transferência - Inferior direita */
+.opcao-menu:nth-child(3) { /* Categoria - Inferior direita */
     bottom: 70px;
     right: -25px;
+    transition-delay: 0s;
+}
+
+.opcao-menu:nth-child(4) { /* Fechar - Centro, alinhado com o + */
+    bottom: -5px;
+    left: calc(50% - 30px);
     transition-delay: 0s;
 }
 
@@ -801,6 +779,10 @@ body.tema-claro .opcao-menu span {
     background-color: #8b5cf6;
 }
 
+.opcao-menu.fechar-menu i {
+    background-color: #4b5563;
+}
+
 .opcao-menu:hover {
     transform: scale(1.1);
 }
@@ -809,7 +791,6 @@ body.tema-claro .opcao-menu span {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 10px rgba(128, 128, 128, 0.25);
 }
 
-/* Modal */
 .modal {
     position: fixed;
     top: 0;
@@ -826,12 +807,10 @@ body.tema-claro .opcao-menu span {
     transition: opacity 0.3s;
 }
 
-/* ─── Admin ────────────────────────────────────────────────── */
 .admin-container { padding: 0; max-width: 100%; margin: 0; font-size: 0.95rem; }
 .form-linha { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .form-grid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: center; }
 
-/* Admin form layouts */
 .admin-novo-form    { display: flex; flex-direction: column; gap: 10px; }
 .admin-novo-campos  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .admin-card-header  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -847,7 +826,6 @@ body.tema-claro .opcao-menu span {
 .admin-resultado:empty { display: none; }
 .botao-sm           { padding: 8px 14px !important; font-size: 0.85rem !important; }
 
-/* Admin table */
 .lista-tabela { margin-top: 14px; overflow: hidden; border-radius: 10px; border: 1px solid var(--cor-borda); }
 .tabela { width: 100%; border-collapse: collapse; }
 .tabela th,
@@ -869,7 +847,6 @@ body.tema-claro .tabela tbody tr:hover td { background: rgba(0,0,0,0.025); }
 .tabela code { font-size: 0.78rem; opacity: 0.65; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
 body.tema-claro .tabela code { background: rgba(0,0,0,0.06); }
 
-/* Linhas da tabela de transações do dashboard */
 .transacao-linha { border-color: rgba(255,255,255,0.06); }
 .transacao-linha:hover { background: rgba(255,255,255,0.04); }
 body.tema-claro .transacao-linha { border-color: var(--cor-borda); }
@@ -889,7 +866,6 @@ body.tema-claro .transacao-conta-badge {
     border: 1px solid var(--cor-borda);
 }
 
-/* Admin page header */
 .admin-page-header {
   display: flex;
   align-items: center;
@@ -926,7 +902,6 @@ body.tema-claro .transacao-conta-badge {
   margin: 0;
 }
 
-/* Admin metrics */
 .admin-metrics { margin: 0 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .admin-metrics:empty { display: none; margin: 0; }
 .admin-metrics .resumo-card { min-height: 78px; padding: 1rem 1.15rem; transition: transform 0.15s ease; }
@@ -937,7 +912,6 @@ body.tema-claro .transacao-conta-badge {
   color: var(--cor-destaque);
 }
 
-/* Admin toolbar — flat underline tab bar */
 .admin-toolbar {
   display: flex;
   justify-content: space-between;
@@ -995,7 +969,6 @@ body.tema-claro .transacao-conta-badge {
   padding-bottom: 8px;
 }
 
-/* Period selector (admin) */
 .admin-container #seletor-bonito-periodo { position: relative; overflow: visible; z-index: 1000; }
 .seletor-bonito  { position: relative; }
 .seletor-botao {
@@ -1015,13 +988,11 @@ body.tema-claro .transacao-conta-badge {
 }
 .seletor-botao:hover { border-color: var(--cor-destaque); transform: translateY(-1px); }
 
-/* Badges */
 .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
 .status-ok      { background: rgba(76,175,80,0.12);  color: #4CAF50; border: 1px solid rgba(76,175,80,0.3);  }
 .status-pending { background: rgba(244,67,54,0.12);  color: #F44336; border: 1px solid rgba(244,67,54,0.3);  }
 .status-error   { background: rgba(255,193,7,0.12);  color: #d4a017; border: 1px solid rgba(255,193,7,0.3);  }
 
-/* Icon buttons */
 .icon-btn {
   background: rgba(255,255,255,0.06);
   color: var(--cor-texto);
@@ -1038,7 +1009,6 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
 .icon-btn.danger { color: #F44336; border-color: rgba(244,67,54,0.3); }
 .icon-btn.danger:hover { background: rgba(244,67,54,0.1); }
 
-/* Admin responsive */
 @media (max-width: 900px) {
   .admin-toolbar     { flex-direction: column; align-items: stretch; border-bottom: none; }
   .admin-toolbar .filtros-lista { border-bottom: 1px solid var(--cor-borda); overflow-x: auto; flex-wrap: nowrap; }
@@ -1060,42 +1030,6 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
     pointer-events: all;
 }
 
-.modal-conteudo {
-    background-color: var(--cor-fundo-secundario);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: var(--sombra-padrao);
-}
-
-.modal-cabecalho {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--cor-borda);
-}
-
-.modal-cabecalho h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.fechar-modal {
-    background: none;
-    border: none;
-    color: var(--cor-texto-secundario);
-    font-size: 1.8rem;
-    cursor: pointer;
-}
-
-.modal-corpo {
-    padding: 20px;
-}
-
-/* Formulários */
 .form-grupo {
     margin-bottom: 20px;
 }
@@ -1131,16 +1065,6 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
     outline: none;
 }
 
-.botao {
-    padding: 12px 20px;
-    border-radius: 8px;
-    border: none;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-}
-
 .botao-primario {
     background-color: var(--cor-destaque);
     color: white;
@@ -1152,19 +1076,16 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
     color: var(--cor-texto);
 }
 
-.botao:hover {
-    transform: translateY(-2px);
-}
-
 .botao-primario:hover {
     background-color: #e6a800;
+    transform: translateY(-2px);
 }
 
 .botao-secundario:hover {
     background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
-/* Lista de transações */
 .lista-transacoes {
     margin-top: 20px;
     padding: 0 20px;
@@ -1226,7 +1147,6 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
     text-align: right;
 }
 
-/* Lista de categorias */
 .lista-categorias {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -1268,7 +1188,6 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
     margin-top: 5px;
 }
 
-/* Responsividade */
 @media (max-width: 768px) {
     .resumo-financeiro {
         flex-direction: column;
@@ -1283,94 +1202,6 @@ body.tema-claro .icon-btn:hover { background: rgba(0,0,0,0.09); }
     }
 }
 
-/* ===== ESTILOS PARA CATEGORIAS ===== */
-
-/* Header das Categorias */
-.categorias-header {
-    background: rgba(24, 24, 27, 0.95);
-    color: var(--cor-texto);
-    padding: 24px var(--espaco-lateral-conteudo) 20px;
-    border-radius: 0 0 30px 30px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
-body.tema-claro .categorias-header {
-    background: rgba(255, 255, 255, 0.90);
-    color: var(--cor-texto);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.categorias-background { display: none; }
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-}
-
-.header-info {
-    flex: 1;
-}
-
-.categorias-header h1 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.categorias-header h1 i {
-    font-size: 1.5rem;
-}
-
-.categorias-header p {
-    margin: 0;
-    opacity: 0.9;
-    font-size: 1rem;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-}
-
-.btn-nova-categoria {
-    background: rgba(255, 255, 255, 0.20);
-    color: var(--cor-texto);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    padding: 12px 20px;
-    border-radius: 25px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.25s ease, opacity 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-    box-shadow: none;
-    font-size: 0.95rem;
-}
-
-.btn-nova-categoria:hover {
-    background: rgba(255, 255, 255, 0.30);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.20);
-}
-
-.btn-nova-categoria i { font-size: 1rem; }
-body.tema-claro .btn-nova-categoria {
-    background: rgba(255, 255, 255, 0.85);
-    color: var(--cor-texto);
-    border: 1px solid rgba(0, 0, 0, 0.10);
-}
-body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95); }
-
-/* Filtros */
 .filtros-container {
     padding: 0 20px;
     margin-bottom: 25px;
@@ -1391,7 +1222,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 20px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     font-size: 0.9rem;
     text-decoration: none;
 }
@@ -1409,7 +1240,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
 }
 
-/* Container das Categorias */
 .categorias-container {
     padding: 0 20px;
     margin-bottom: 30px;
@@ -1424,13 +1254,12 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     padding: 20px;
 }
 
-/* Cards das Categorias */
 .categoria-card {
     background: var(--cor-fundo-secundario);
     border-radius: 15px;
     padding: 20px;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     border: 2px solid transparent;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     animation: fadeInUp 0.6s ease forwards;
@@ -1502,7 +1331,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 0.9rem;
 }
 
-/* Estado Vazio */
 .estado-vazio {
     display: flex;
     flex-direction: column;
@@ -1546,7 +1374,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 25px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     font-size: 1rem;
     display: inline-flex;
     align-items: center;
@@ -1559,15 +1387,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
 }
 
-/* Animações */
-@keyframes fadeInUp {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Responsividade para Categorias */
 @media (max-width: 768px) {
     .categorias-header {
         padding: 25px 15px;
@@ -1649,26 +1468,8 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
         text-align: center;
     }
     
-    .dashboard-header .botao-ocultar span {
-        display: none;
-    }
-    
-    .dashboard-header .botao-ocultar {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        z-index: 10;
-    }
 }
 
-/* ===== ESTILOS PARA PÁGINA DE TRANSAÇÕES ===== */
-
-/* Header da página de transações */
 .transacoes-header {
     background: var(--cor-destaque);
     color: white;
@@ -1689,7 +1490,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     opacity: 0.3;
 }
 
-/* Header do dashboard */
 .dashboard-header {
     background: var(--cor-destaque);
     border-radius: 0 0 30px 30px;
@@ -1713,7 +1513,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 /* Admin: header compacto (legado removido — usa .admin-page-header) */
 .admin-container .dashboard-header { display: none; }
 
-/* Admin card defaults */
 .admin-container .card {
   padding: 20px;
   border-radius: 12px;
@@ -1770,29 +1569,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     margin: 0;
 }
 
-.dashboard-header .botao-ocultar {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 0 1rem;
-    height: 36px;
-    border-radius: 0.6rem;
-    font-size: 0.92rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    position: relative;
-    z-index: 10;
-}
-
-.dashboard-header .botao-ocultar:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-}
-
 .dashboard-header .controle-periodo {
     display: flex;
     align-items: center;
@@ -1817,7 +1593,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 0.5rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .dashboard-header .seletor-botao:hover {
@@ -1933,7 +1709,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1968,7 +1744,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .dashboard-header .calendario-dia:hover { background: #ececf4; }
 .dashboard-header .calendario-dia.vazio { visibility: hidden; }
@@ -1999,13 +1775,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     max-height: 78vh;
     overflow-y: auto;
     overscroll-behavior: contain;
-}
-/* Overlay para capturar cliques fora do painel e evitar cobertura por elementos */
-.overlay-seletor {
-    position: fixed;
-    inset: 0;
-    background: transparent;
-    z-index: 999;
 }
 .seletor-painel .painel-topo {
     background: var(--cor-destaque);
@@ -2060,7 +1829,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .seletor-painel .calendario-dia:hover { background: #ececf4; }
 .seletor-painel .calendario-dia.vazio { visibility: hidden; }
@@ -2165,7 +1934,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border: 1px solid rgba(255, 255, 255, 0.3);
     padding: 0.35rem 0.6rem;
     border-radius: 0.6rem;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     height: 36px;
 }
 
@@ -2214,7 +1983,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     padding: 0 4px;
 }
 
-/* Melhorias específicas para input date */
 .dashboard-header .controle-input[type="date"] {
     background: transparent;
     border: none;
@@ -2284,7 +2052,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .btn-nova-transacao:hover {
@@ -2293,7 +2061,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     transform: translateY(-2px);
 }
 
-/* Resumo das transações */
 .resumo-transacoes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -2309,7 +2076,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     display: flex;
     align-items: center;
     gap: 1rem;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     border: 1px solid var(--cor-borda);
 }
 
@@ -2368,7 +2135,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     color: #F44336;
 }
 
-/* Filtros das transações */
 .transacoes-filtros {
     background: var(--cor-fundo-secundario);
     border-radius: 1rem;
@@ -2403,7 +2169,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 0.875rem;
     background: var(--cor-fundo);
     color: var(--cor-texto);
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     cursor: pointer;
 }
 
@@ -2413,7 +2179,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
 }
 
-/* Lista de transações */
 .transacoes-content {
     position: relative;
 }
@@ -2424,7 +2189,69 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 1.5rem;
 }
 
-/* Grupo de transações por data */
+#paginador-container { margin-top: 8px; }
+.paginador {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--cor-fundo-secundario);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    box-shadow: var(--sombra-padrao);
+    position: static;
+    margin: 10px auto;
+    width: max-content;
+}
+.paginador-info {
+    color: var(--cor-texto-secundario);
+    font-size: 0.9rem;
+}
+.paginador-controles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.paginador-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--cor-borda);
+    background: rgba(255,255,255,0.06);
+    color: var(--cor-texto);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.paginador-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+.paginador-btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+.paginador-btn.ativo {
+    background: var(--cor-destaque);
+    border-color: var(--cor-destaque);
+    color: #fff;
+}
+.paginador-seletor {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+    color: var(--cor-texto-secundario);
+    font-size: 0.85rem;
+}
+.paginador-seletor select {
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--cor-borda);
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    padding: 0 10px;
+}
+@media (max-width: 600px) {
+    .paginador { flex-direction: column; gap: 10px; padding: 10px 12px; }
+    .paginador-controles { flex-wrap: wrap; justify-content: center; }
+}
 .grupo-data {
     animation: fadeInUp 0.6s ease forwards;
     opacity: 0;
@@ -2467,7 +2294,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 0.75rem;
 }
 
-/* Card de transação */
 .transacao-card {
     background: var(--cor-fundo-secundario);
     border-radius: 1rem;
@@ -2477,7 +2303,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     gap: 1rem;
     box-shadow: var(--sombra-padrao);
     border: 1px solid var(--cor-borda);
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     animation: fadeInUp 0.6s ease forwards;
     opacity: 0;
     transform: translateY(20px);
@@ -2570,7 +2396,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     font-size: 0.8rem;
 }
 
@@ -2594,7 +2420,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     color: white;
 }
 
-/* Estado vazio */
 .estado-vazio {
     display: flex;
     flex-direction: column;
@@ -2696,7 +2521,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -2708,14 +2533,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     box-shadow: 0 8px 25px rgba(108, 99, 255, 0.3);
 }
 
-/* Animações */
-@keyframes fadeInUp {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 @keyframes float {
     0%, 100% {
         transform: translateY(0px);
@@ -2725,7 +2542,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     }
 }
 
-/* Responsividade para transações */
 @media (max-width: 768px) {
     .transacoes-header {
         padding: 1.5rem 1rem;
@@ -2791,7 +2607,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     }
 }
 
-/* Animações */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -2810,7 +2625,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     animation: slideUp 0.3s ease-in-out;
 }
 
-/* Primeiros passos */
 .primeiros-passos {
     margin-top: 30px;
 }
@@ -2879,7 +2693,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     padding: 8px 0;
     width: 20%;
     text-align: center;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     border-radius: 12px;
     position: relative;
 }
@@ -2887,11 +2701,10 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .menu-item i {
     font-size: 1.2rem;
     margin-bottom: 5px;
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .menu-item span {
-    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    font-size: inherit;
 }
 
 .menu-item.ativo {
@@ -2931,15 +2744,12 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     background: rgba(108, 99, 255, 0.05);
 }
 
-/* ===== PÁGINA DE PERFIL REESTRUTURADA ===== */
-
 .pagina-perfil {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-/* Hero */
 .perfil-hero {
     display: flex;
     flex-direction: column;
@@ -3012,7 +2822,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     transform: translateY(-1px);
 }
 
-/* Toggle tema */
 .perfil-item-tema {
     grid-template-columns: 44px 1fr 44px;
 }
@@ -3046,7 +2855,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     transform: translateX(18px);
 }
 
-/* Ícones coloridos */
 .perfil-icon-export {
     background: linear-gradient(135deg, rgba(79,172,254,0.25), rgba(0,242,254,0.12)) !important;
     border-color: rgba(79,172,254,0.35) !important;
@@ -3056,18 +2864,8 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-color: rgba(108,99,255,0.35) !important;
 }
 
-/* Footer */
-.perfil-footer {
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--cor-texto-secundario);
-    opacity: 0.6;
-    padding: 4px 0 8px;
-}
-
 .pagina-perfil .container { all: unset; display: contents; }
 
-/* Seções e lista de ações */
 .perfil-section {
     padding: 0;
     margin-bottom: 18px;
@@ -3094,7 +2892,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     color: inherit;
 }
 .perfil-item:hover {
@@ -3238,7 +3036,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Resumo do perfil moderno */
 .perfil-resumo {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -3311,7 +3108,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     }
 }
 
-/* Menu de Opções */
 .opcoes-menu {
     padding: 0 20px;
     margin-bottom: 24px;
@@ -3331,7 +3127,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    transition: transform 0.25s ease, opacity 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
@@ -3416,10 +3212,12 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     color: #ff6b6b;
 }
 
-/* Footer */
 .perfil-footer {
     padding: 20px;
     text-align: center;
+    font-size: 0.8rem;
+    color: var(--cor-texto-secundario);
+    opacity: 0.6;
 }
 
 .app-info {
@@ -3436,16 +3234,9 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 1rem;
 }
 
-/* Animações */
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .opcao-card {
@@ -3457,7 +3248,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .opcao-card:nth-child(3) { animation-delay: 0.3s; }
 .opcao-card:nth-child(4) { animation-delay: 0.4s; }
 
-/* Estilos específicos para modais */
 .modal-cabecalho h3 {
     font-size: 1.5rem;
     font-weight: 600;
@@ -3554,7 +3344,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     min-width: 100px;
 }
 
@@ -3581,7 +3371,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     transform: translateY(-1px);
 }
 
-/* Melhorias no modal */
 .modal-conteudo {
     background-color: var(--cor-fundo-secundario);
     border-radius: 16px;
@@ -3607,7 +3396,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     padding: 24px;
 }
 
-/* Animação do modal */
 .modal {
     background: rgba(0, 0, 0, 0.6);
 }
@@ -3627,7 +3415,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     }
 }
 
-/* Responsividade */
 @media (max-width: 480px) {
     .perfil-content {
         flex-direction: column;
@@ -3675,7 +3462,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     }
 }
 
-/* ===== Estilos do Modal de Importação ===== */
 .importacao-controles {
     display: grid;
     grid-template-columns: 1fr;
@@ -3702,7 +3488,6 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
 .aviso-pdf { font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px; }
 .import-status { margin-top: 10px; font-size: 0.95rem; }
 
-/* Inputs do modal de importação */
 .modal select,
 .modal input[type="file"],
 .modal input[type="password"] {
@@ -3770,7 +3555,7 @@ body.tema-claro .btn-nova-categoria:hover { background: rgba(255, 255, 255, 0.95
     border-radius: 8px;
     cursor: pointer;
     margin-right: 10px;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     height: 36px;
     display: inline-flex;
     align-items: center;
@@ -3810,7 +3595,6 @@ body.tema-claro .modal input[type="file"]::file-selector-button {
     color: #1F2937;
 }
 
-/* Seleção em massa de transações */
 .barra-selecao {
     display: none;
     align-items: center;
@@ -3907,7 +3691,6 @@ body.tema-claro .modal input[type="file"]::file-selector-button {
     }
 }
 
-/* Botão cancelar em vermelho */
 #cancelar-selecao {
     background-color: var(--cor-despesa);
     color: #fff;
@@ -3938,7 +3721,6 @@ body.tema-claro .modal input[type="file"]::file-selector-button {
     }
 }
 
-/* Recorrência - container e botões de dia (theme-aware) */
 .container-config-recorrencia {
     background: var(--cor-fundo-secundario);
     border: 1px solid var(--cor-borda);
@@ -4005,7 +3787,6 @@ body.tema-claro .campo-formulario input[type="month"] {
     outline: none;
 }
 
-/* Checkbox definir término */
 .label-checkbox-fim {
     display: flex;
     align-items: center;

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/usuario.php';
 
 function cfg() {
     global $database;
@@ -12,7 +13,7 @@ function cfg() {
 if (!function_exists('listarAssinaturas')) {
 function listarAssinaturas($inicio = null, $fim = null) {
     global $database;
-    // detectar coluna de criaÃ§Ã£o
+    // detectar coluna de criação
     $cols = $database->select("SELECT COLUMN_NAME as c FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'assinaturas'");
     $cmap = array_column($cols, 'c');
     $campoData = null;
@@ -62,7 +63,7 @@ function atualizarAssinatura($id, $status, $plano_id) {
     $set = "status = ?";
     $params = [$status];
     if ($plano_id > 0) { $set .= ", plano_id = ?"; $params[] = $plano_id; }
-    // atualizado_em Ã© opcional â€“ tenta, ignora se coluna nÃ£o existir
+    // atualizado_em é opcional – tenta, ignora se coluna não existir
     try {
         $database->update("UPDATE assinaturas SET $set, atualizado_em = NOW() WHERE id = ?", array_merge($params, [$id]));
     } catch (\Exception $e) {

@@ -293,14 +293,6 @@ $nome_usuario = $usuario_atual['nome'] ?? 'Usuário';
                 <button class="perf-toggle" id="tog-tema" onclick="perfil.toggleTema()"></button>
             </div>
             <div class="perf-row no-click">
-                <div class="perf-row-ico" style="background:rgba(245,166,35,.1);color:#F5A623"><i class="fas fa-eye-slash"></i></div>
-                <div class="perf-row-body">
-                    <div class="perf-row-ttl">Ocultar valores</div>
-                    <div class="perf-row-sub">Esconde saldos financeiros</div>
-                </div>
-                <button class="perf-toggle" id="tog-ocultar" onclick="perfil.toggleOcultar()"></button>
-            </div>
-            <div class="perf-row no-click">
                 <div class="perf-row-ico" style="background:rgba(34,197,94,.1);color:#22C55E"><i class="fas fa-coins"></i></div>
                 <div class="perf-row-body"><div class="perf-row-ttl">Moeda padrão</div></div>
                 <select class="perf-sel" id="sel-moeda" onchange="perfil.setMoeda(this.value)">
@@ -358,15 +350,7 @@ $nome_usuario = $usuario_atual['nome'] ?? 'Usuário';
     <div class="perf-grp">
         <div class="perf-grp-lbl">Dados &amp; Privacidade</div>
         <div class="perf-grp-card">
-            <button class="perf-row" onclick="perfil.exportar()">
-                <div class="perf-row-ico" style="background:rgba(59,130,246,.1);color:#3B82F6"><i class="fas fa-download"></i></div>
-                <div class="perf-row-body">
-                    <div class="perf-row-ttl">Exportar dados</div>
-                    <div class="perf-row-sub">Backup em formato JSON</div>
-                </div>
-                <i class="fas fa-chevron-right perf-row-arrow"></i>
-            </button>
-            <button class="perf-row" onclick="perfil.toast('Acesse: peak.app/privacidade','info')">
+<button class="perf-row" onclick="perfil.toast('Acesse: peak.app/privacidade','info')">
                 <div class="perf-row-ico" style="background:rgba(99,102,241,.1);color:#6366F1"><i class="fas fa-file-alt"></i></div>
                 <div class="perf-row-body"><div class="perf-row-ttl">Política de Privacidade</div></div>
                 <i class="fas fa-external-link-alt perf-row-arrow"></i>
@@ -436,7 +420,6 @@ var perfil = (function(){
 var S = {
     u: Object.assign({}, dadosUsuario || {}),
     tema: localStorage.getItem('temaEscuro') === 'true',
-    ocultar: localStorage.getItem('valoresOcultos') === 'true',
     moeda: localStorage.getItem('moedaPadrao') || 'BRL',
     segStep: 0, // 0=fechado, 1=form-send, 2=form-code
 };
@@ -495,9 +478,8 @@ function renderFields(){
 }
 
 function renderToggles(){
-    var tt=el('tog-tema'), to=el('tog-ocultar'), sm=el('sel-moeda');
+    var tt=el('tog-tema'), sm=el('sel-moeda');
     if(tt) tt.className='perf-toggle'+(S.tema?' on':'');
-    if(to) to.className='perf-toggle'+(S.ocultar?' on':'');
     if(sm) sm.value=S.moeda;
 }
 
@@ -647,13 +629,6 @@ function toggleTema(){
     else { document.body.classList.toggle('tema-escuro',S.tema); document.body.classList.toggle('tema-claro',!S.tema); }
 }
 
-function toggleOcultar(){
-    S.ocultar=!S.ocultar;
-    localStorage.setItem('valoresOcultos',S.ocultar);
-    renderToggles();
-    toast(S.ocultar?'Valores ocultados.':'Valores visíveis.','info');
-}
-
 function setMoeda(v){ S.moeda=v; localStorage.setItem('moedaPadrao',v); toast('Moeda alterada.','success'); }
 
 function abrirSenha(){
@@ -707,12 +682,6 @@ function salvarSenha(){
     }
 }
 
-function exportar(){
-    if(typeof window.exportarDados==='function'){ window.exportarDados(); return; }
-    var blob=new Blob([JSON.stringify({usuario:S.u,exportadoEm:new Date().toISOString()},null,2)],{type:'application/json'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='peak_dados.json'; a.click();
-    toast('Dados exportados!','success');
-}
 
 function confirmarSair(){
     confirm_({icon:'👋',title:'Sair da conta',msg:'Encerrar sessão atual?',okTxt:'Sair',danger:true,onOk:sair});
@@ -728,12 +697,11 @@ function sair(){
 function init(){
     S.u=Object.assign({},dadosUsuario||{});
     S.tema=localStorage.getItem('temaEscuro')==='true';
-    S.ocultar=localStorage.getItem('valoresOcultos')==='true';
     S.moeda=localStorage.getItem('moedaPadrao')||'BRL';
     renderHero(); renderFields(); renderToggles();
 }
 
-return { abrirUpload:abrirUpload, handleUpload:handleUpload, mskCPF:mskCPF, mskTel:mskTel, abrirModal:abrirModal, fecharModal:fecharModal, salvarModal:salvarModal, toggleTema:toggleTema, toggleOcultar:toggleOcultar, setMoeda:setMoeda, abrirSenha:abrirSenha, fecharSenha:fecharSenha, salvarSenha:salvarSenha, exportar:exportar, confirmarSair:confirmarSair, toast:toast, init:init };
+return { abrirUpload:abrirUpload, handleUpload:handleUpload, mskCPF:mskCPF, mskTel:mskTel, abrirModal:abrirModal, fecharModal:fecharModal, salvarModal:salvarModal, toggleTema:toggleTema, setMoeda:setMoeda, abrirSenha:abrirSenha, fecharSenha:fecharSenha, salvarSenha:salvarSenha, confirmarSair:confirmarSair, toast:toast, init:init };
 })();
 
 // Compatibilidade com AJAX loader

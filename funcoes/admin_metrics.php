@@ -38,6 +38,9 @@ function resumoMetrics($inicio, $fim) {
     foreach ($cfgRows as $r) { $cfg[$r['chave']] = $r['valor']; }
     $gwNome = isset($cfg['gateway_padrao']) ? strtoupper($cfg['gateway_padrao']) : '—';
     $gwCon  = !empty($cfg['stripe_api_key']);
+    
+    $planosTot = $database->select("SELECT COUNT(*) AS total FROM planos", []);
+    $planosAtivos = $database->select("SELECT COUNT(*) AS total FROM planos WHERE ativo = 1", []);
 
     return [
         'sucesso'             => true,
