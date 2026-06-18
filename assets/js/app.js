@@ -364,11 +364,20 @@
       const json = await res.json();
       const todasTransacoes = json.data || json || [];
 
+      // Parse "YYYY-MM-DD HH:MM:SS" como hora local
+      const parseLocal = (dtRaw) => {
+        if (!dtRaw) return null;
+        const [date, time = "0:0:0"] = dtRaw.split(" ");
+        const [y, mo, d] = date.split("-").map(Number);
+        const [h, min, s] = time.split(":").map(Number);
+        return new Date(y, mo - 1, d, h, min, s);
+      };
+
       const intervalo = this.obterIntervaloSelecionado();
       const transacoesFiltradas = todasTransacoes.filter((t) => {
         const dtRaw = t.data_transacao || t.data;
-        if (!dtRaw) return false;
-        const d = new Date(dtRaw);
+        const d = parseLocal(dtRaw);
+        if (!d) return false;
         return d >= intervalo.inicio && d <= intervalo.fim;
       });
 
@@ -413,8 +422,8 @@
         // Agregar por mês nos últimos 12 meses
         const dtRaw = transacao.data_transacao || transacao.data;
         if (dtRaw && !ehTransferencia) {
-          const d = new Date(dtRaw);
-          const idx = mapaMesIdx[`${d.getFullYear()}-${d.getMonth()}`];
+          const d = parseLocal(dtRaw);
+          const idx = d ? mapaMesIdx[`${d.getFullYear()}-${d.getMonth()}`] : undefined;
           if (idx !== undefined) {
             if (transacao.tipo === "receita") receitasMensal[idx] += valor;
             else if (transacao.tipo === "despesa") despesasMensal[idx] += valor;
@@ -841,8 +850,6 @@
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!dados) dados = await this.obterDadosFinanceiros();
-      "EXIBINDO DADOS TRAZIDOS PARA PREENCHER O DONUT DE DESPESA ____________________",
-    );
     if (this.graficoDonutDespesas) this.graficoDonutDespesas.destroy();
 
     const labels = dados.categoriasDespesas.map((c) => c.nome);
